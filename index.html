@@ -414,11 +414,13 @@
   .edit-grid { display: grid; gap: 14px; align-items: start; }
   @media (min-width: 920px) { .edit-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; } }
 
-  #editView input[type=text], #editView input[type=number], #editView textarea, #editView select {
+  #editView input[type=text], #editView input[type=number], #editView textarea, #editView select,
+  #viewReprise input[type=text] {
     width: 100%; padding: 10px 11px; border-radius: var(--r-sm);
     border: 1px solid var(--line-firm); background: var(--surface-2); color: inherit;
   }
   #editView textarea { resize: vertical; line-height: 1.5; font-family: inherit; }
+  #viewReprise input[type=text] { min-height: 44px; }
   #editView input[type=number] { font-variant-numeric: tabular-nums; }
   .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .marge { margin: -6px 0 0; font-size: 13px; color: var(--good); font-weight: 600; }
@@ -432,6 +434,17 @@
     width: 62px; height: 62px; object-fit: cover;
     border-radius: var(--r-sm); border: 1px solid var(--line);
   }
+
+  /* ---- Reprise ---- */
+  #repriseCartes { display: grid; gap: 10px; margin-top: 14px; }
+  .thumbs.grand img { width: 118px; height: 148px; }
+  .variantes { display: grid; gap: 6px; }
+  .variantes button {
+    text-align: left; padding: 9px 11px; font-size: 13.5px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface-2); color: inherit;
+  }
+  .variantes button:hover { border-color: var(--accent); background: var(--accent-soft); }
 
   /* ---- Barre collante mobile ---- */
   .dock {
@@ -495,6 +508,7 @@
     <button type="button" class="tab" id="tabAnnonces" role="tab" aria-selected="false" aria-controls="viewAnnonces">
       Annonces <span class="count" id="tabCount" hidden>0</span>
     </button>
+    <button type="button" class="tab" id="tabReprise" role="tab" aria-selected="false" aria-controls="viewReprise">Reprise</button>
   </nav>
 
   <div id="viewPhotos" role="tabpanel" aria-labelledby="tabPhotos">
@@ -711,6 +725,79 @@
 
   </div><!-- /viewAnnonces -->
 
+  <div id="viewReprise" role="tabpanel" aria-labelledby="tabReprise" hidden>
+
+    <div id="repriseListe">
+      <p class="empty" id="repriseVide" hidden>Aucune annonce à reprendre pour l'instant.</p>
+      <p class="hint" id="repriseIntro">Choisis une annonce : tu pourras lui refaire ses visuels et son titre sans ressortir le vêtement.</p>
+      <div id="repriseCartes"></div>
+    </div>
+
+    <div id="repriseAtelier" hidden>
+      <div class="edit-head">
+        <button type="button" class="btn" id="repriseRetour">← Reprise</button>
+        <span class="hint" id="repriseSource"></span>
+      </div>
+
+      <div class="edit-grid">
+        <div class="panel">
+          <div class="body">
+            <div class="field">
+              <div class="lbl">Nouveaux visuels <span class="val" id="repriseCompte"></span></div>
+              <div class="thumbs grand" id="repriseApercu"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="body">
+            <div class="field">
+              <div class="lbl">Fond</div>
+              <div class="swatches" id="repriseFonds">
+                <button type="button" class="sw" data-color="#ffffff" style="background:#ffffff" aria-label="Blanc" aria-pressed="true"></button>
+                <button type="button" class="sw" data-color="#f1efec" style="background:#f1efec" aria-label="Gris très clair" aria-pressed="false"></button>
+                <button type="button" class="sw" data-color="#dcd8d2" style="background:#dcd8d2" aria-label="Gris clair" aria-pressed="false"></button>
+                <button type="button" class="sw" data-color="#eee5d8" style="background:#eee5d8" aria-label="Beige clair" aria-pressed="false"></button>
+                <button type="button" class="sw" data-color="#e6eaed" style="background:#e6eaed" aria-label="Gris bleuté" aria-pressed="false"></button>
+                <button type="button" class="sw" data-color="#1d1d1c" style="background:#1d1d1c" aria-label="Noir" aria-pressed="false"></button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="repriseAngle">Inclinaison <span class="val" id="repriseAngleVal">0°</span></label>
+              <input type="range" id="repriseAngle" min="-8" max="8" step="1" value="0">
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="repriseZoom">Cadrage <span class="val" id="repriseZoomVal">100 %</span></label>
+              <input type="range" id="repriseZoom" min="100" max="125" step="1" value="100">
+            </div>
+
+            <div class="field">
+              <div class="lbl">Mise en page</div>
+              <div class="checks">
+                <label><input type="checkbox" id="repriseMiroir"> <span>Image en miroir</span></label>
+                <label><input type="checkbox" id="repriseCarre"> <span>Format carré</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="repriseTitre">Nouveau titre <span class="val" id="repriseTitreCount">0/60</span></label>
+              <input type="text" id="repriseTitre">
+              <div id="repriseVariantes" class="variantes"></div>
+            </div>
+
+            <div class="field">
+              <button type="button" class="btn primary wide" id="repriseEnregistrer">Enregistrer comme nouvelle annonce</button>
+              <button type="button" class="btn wide" id="repriseTelecharger">Télécharger les visuels</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /viewReprise -->
+
   <div class="dock" id="dock">
     <button type="button" class="btn primary wide" id="dlAllMobile">Télécharger les photos</button>
   </div>
@@ -834,8 +921,10 @@
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
-  /** Renvoie { canvas, coverage } — coverage = part de l'image classée comme fond. */
-  function render(item, maxSide) {
+  /** Rend une photo avec un jeu de réglages ; `o` permet d'en passer un autre
+      que celui de l'atelier photo (la reprise a les siens).
+      Renvoie { canvas, coverage } — coverage = part de l'image classée comme fond. */
+  function render(item, maxSide, o = opts) {
     const limit = maxSide > 0 ? maxSide : HARD_MAX;
     const scale = Math.min(1, limit / Math.max(item.w, item.h));
     const w = Math.max(1, Math.round(item.w * scale));
@@ -852,7 +941,7 @@
     const data = img.data;
     const N = w * h;
 
-    const thr = opts.tol * 3;
+    const thr = o.tol * 3;
     const thr2 = thr * thr;
     const localThr2 = (thr * 0.35) * (thr * 0.35);  // tolérance de proche en proche (dégradés d'ombre)
     const capThr2 = (thr * 1.8) * (thr * 1.8);      // plafond absolu malgré la propagation locale
@@ -896,7 +985,7 @@
       if (!mask[idx]) push(idx);
     }
 
-    const grow = opts.keepShadows ? 0 : 1;
+    const grow = o.keepShadows ? 0 : 1;
 
     while (sp > 0) {
       const idx = stack[--sp];
@@ -927,7 +1016,7 @@
 
     // Érosion d'1 px avant lissage : le flou reste centré sur le vrai contour.
     let alpha;
-    if (opts.feather > 0) {
+    if (o.feather > 0) {
       const er = new Uint8Array(N);
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
@@ -940,17 +1029,17 @@
           er[idx] = (l && r && u && d) ? 255 : 0;
         }
       }
-      alpha = boxBlur(er, w, h, opts.feather);
+      alpha = boxBlur(er, w, h, o.feather);
     } else {
       alpha = mask;
     }
 
-    const bg = hexToRgb(opts.color);
+    const bg = hexToRgb(o.color);
     for (let idx = 0; idx < N; idx++) {
       const a = alpha[idx] / 255;
       if (a <= 0) continue;
       const i = idx * 4;
-      if (opts.transparent) {
+      if (o.transparent) {
         data[i + 3] = Math.round(data[i + 3] * (1 - a));
       } else {
         data[i]     = data[i] * (1 - a) + bg.r * a;
@@ -960,14 +1049,14 @@
     }
     ctx.putImageData(img, 0, 0);
 
-    if (!opts.square) return { canvas: cv, coverage };
+    if (!o.square) return { canvas: cv, coverage };
 
     const side = Math.max(w, h);
     const sq = document.createElement("canvas");
     sq.width = side; sq.height = side;
     const sctx = sq.getContext("2d");
-    if (!opts.transparent) {
-      sctx.fillStyle = opts.color;
+    if (!o.transparent) {
+      sctx.fillStyle = o.color;
       sctx.fillRect(0, 0, side, side);
     }
     sctx.drawImage(cv, (side - w) / 2, (side - h) / 2);
@@ -2001,12 +2090,15 @@
     currentView = v;
     $("#viewPhotos").hidden = v !== "photos";
     $("#viewAnnonces").hidden = v !== "annonces";
+    $("#viewReprise").hidden = v !== "reprise";
     $("#tabPhotos").setAttribute("aria-selected", String(v === "photos"));
     $("#tabAnnonces").setAttribute("aria-selected", String(v === "annonces"));
+    $("#tabReprise").setAttribute("aria-selected", String(v === "reprise"));
     syncChrome();
   }
   $("#tabPhotos").addEventListener("click", () => showView("photos"));
   $("#tabAnnonces").addEventListener("click", () => { showView("annonces"); if (openId) closeAnnonce(); });
+  $("#tabReprise").addEventListener("click", () => { showView("reprise"); $("#repriseRetour").click(); });
 
   async function initAnnonces() {
     try {
@@ -2030,6 +2122,247 @@
     }
     renderList();
   }
+
+  /* ================================================================
+     Reprise d'une annonce — refaire visuels et titre sans ressortir la pièce
+     ================================================================ */
+
+  let repriseId = null, repriseSources = [], repriseUrls = [], repriseRendu = [];
+  const repriseReglages = { fond: "#ffffff", angle: 0, zoom: 100, miroir: false, carre: false };
+  let repriseTimer = null;
+
+  function repriseCartes() {
+    const hote = $("#repriseCartes");
+    hote.innerHTML = "";
+    const dispo = vivantes().filter((a) => a.photos && a.photos.length);
+    $("#repriseVide").hidden = dispo.length > 0;
+    $("#repriseIntro").hidden = dispo.length === 0;
+    for (const a of dispo.sort((x, y) => y.updatedAt - x.updatedAt)) {
+      const el = document.createElement("button");
+      el.type = "button"; el.className = "annonce";
+      const vig = document.createElement("div");
+      vig.className = "vignette";
+      if (a.vignette) vig.style.backgroundImage = `url(${a.vignette})`;
+      const corps = document.createElement("div");
+      corps.className = "corps";
+      const t = document.createElement("div");
+      t.className = "titre" + (a.titre ? "" : " vide");
+      t.textContent = a.titre || "Sans titre";
+      const m = document.createElement("div");
+      m.className = "meta";
+      const chip = document.createElement("span");
+      chip.className = "chip " + a.statut;
+      chip.textContent = STATUTS[a.statut] || a.statut;
+      const n = document.createElement("span");
+      n.textContent = a.photos.length + " photo" + (a.photos.length > 1 ? "s" : "");
+      m.append(chip, n);
+      corps.append(t, m);
+      el.append(vig, corps);
+      el.addEventListener("click", () => ouvrirReprise(a.id));
+      hote.append(el);
+    }
+  }
+
+  /** Variantes de titre : permutation des blocs et échange de synonymes. */
+  function variantesTitre(a) {
+    const titre = (a.titre || "").trim();
+    if (!titre) return [];
+    const out = new Set();
+    const mots = titre.split(/\s+/);
+
+    // Synonyme d'un mot reconnu.
+    for (let i = 0; i < mots.length; i++) {
+      const cle = sansAccent(mots[i]).toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const syn = SYNONYMES[cle];
+      if (syn && syn.length) {
+        const copie = mots.slice();
+        copie[i] = syn[0];
+        out.add(copie.join(" "));
+        break;
+      }
+    }
+    // Marque déplacée en fin, puis en tête.
+    if (a.marque) {
+      const sansMarque = mots.filter((m) => sansAccent(m).toLowerCase() !== sansAccent(a.marque).toLowerCase());
+      if (sansMarque.length !== mots.length) {
+        out.add([...sansMarque, a.marque].join(" "));
+        out.add([a.marque, ...sansMarque].join(" "));
+      }
+    }
+    // Taille repoussée en fin.
+    if (a.taille) {
+      const t = sansAccent(a.taille).toLowerCase();
+      const sansTaille = mots.filter((m) => sansAccent(m).toLowerCase() !== t);
+      if (sansTaille.length !== mots.length) out.add([...sansTaille, "taille " + a.taille].join(" "));
+    }
+    out.delete(titre);
+    return [...out].slice(0, 4);
+  }
+
+  async function ouvrirReprise(id) {
+    repriseId = id;
+    const a = courante_(id);
+    if (!a) return;
+    $("#repriseSource").textContent = "D'après « " + (a.titre || "Sans titre") + " »";
+    $("#repriseTitre").value = a.titre || "";
+    majRepriseTitreCount();
+
+    const vars = $("#repriseVariantes");
+    vars.innerHTML = "";
+    for (const v of variantesTitre(a)) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = v;
+      b.addEventListener("click", () => { $("#repriseTitre").value = v; majRepriseTitreCount(); });
+      vars.append(b);
+    }
+
+    $("#repriseListe").hidden = true;
+    $("#repriseAtelier").hidden = false;
+    window.scrollTo(0, 0);
+
+    $("#repriseCompte").textContent = "préparation…";
+    await assurerPhotos(a);
+    // Les photos enregistrées servent de matière première.
+    repriseSources = [];
+    for (const p of a.photos) {
+      if (!p.blob) continue;
+      try { repriseSources.push({ nom: p.name, bmp: await createImageBitmap(p.blob) }); }
+      catch (e) { console.error(e); }
+    }
+    dessinerReprise();
+  }
+
+  function courante_(id) { return annonces.find((x) => x.id === id) || null; }
+
+  function majRepriseTitreCount() {
+    const n = $("#repriseTitre").value.length;
+    const el = $("#repriseTitreCount");
+    el.textContent = n + "/60";
+    el.style.color = n > 60 ? "var(--warn)" : "";
+  }
+
+  /** Applique le nouveau fond, puis l'inclinaison, le miroir et le cadrage. */
+  function transformerPhoto(bmp) {
+    const r = repriseReglages;
+    // Le fond enregistré est uni : une tolérance basse suffit à le remplacer.
+    const { canvas: base } = render(
+      { bmp, w: bmp.width, h: bmp.height, seeds: [], showOriginal: false },
+      1600,
+      { tol: 14, feather: 2, color: r.fond, transparent: false, square: false, keepShadows: false }
+    );
+
+    const w = base.width, h = base.height;
+    const cote = Math.max(w, h);
+    const out = document.createElement("canvas");
+    out.width = r.carre ? cote : w;
+    out.height = r.carre ? cote : h;
+    const c = out.getContext("2d");
+    c.fillStyle = r.fond;
+    c.fillRect(0, 0, out.width, out.height);
+    c.translate(out.width / 2, out.height / 2);
+    c.rotate((r.angle * Math.PI) / 180);
+    const z = r.zoom / 100;
+    c.scale(r.miroir ? -z : z, z);
+    c.drawImage(base, -w / 2, -h / 2);
+    return out;
+  }
+
+  function dessinerReprise() {
+    clearTimeout(repriseTimer);
+    repriseTimer = setTimeout(() => {
+      const hote = $("#repriseApercu");
+      repriseUrls.forEach(URL.revokeObjectURL);
+      repriseUrls = [];
+      hote.innerHTML = "";
+      repriseRendu = [];
+      if (!repriseSources.length) {
+        $("#repriseCompte").textContent = "aucune photo disponible";
+        return;
+      }
+      for (const src of repriseSources) {
+        const cv = transformerPhoto(src.bmp);
+        repriseRendu.push({ nom: src.nom.replace(/\.(jpe?g|png)$/i, "") + "-reprise.jpg", canvas: cv });
+        const img = document.createElement("img");
+        img.src = cv.toDataURL("image/jpeg", 0.72);
+        img.alt = src.nom;
+        hote.append(img);
+      }
+      $("#repriseCompte").textContent = repriseRendu.length + " visuel" + (repriseRendu.length > 1 ? "s" : "");
+    }, 80);
+  }
+
+  document.querySelectorAll("#repriseFonds .sw").forEach((b) => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll("#repriseFonds .sw").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      repriseReglages.fond = b.dataset.color;
+      dessinerReprise();
+    });
+  });
+  $("#repriseAngle").addEventListener("input", (e) => {
+    repriseReglages.angle = +e.target.value;
+    $("#repriseAngleVal").textContent = e.target.value + "°";
+    dessinerReprise();
+  });
+  $("#repriseZoom").addEventListener("input", (e) => {
+    repriseReglages.zoom = +e.target.value;
+    $("#repriseZoomVal").textContent = e.target.value + " %";
+    dessinerReprise();
+  });
+  $("#repriseMiroir").addEventListener("change", (e) => { repriseReglages.miroir = e.target.checked; dessinerReprise(); });
+  $("#repriseCarre").addEventListener("change", (e) => { repriseReglages.carre = e.target.checked; dessinerReprise(); });
+  $("#repriseTitre").addEventListener("input", majRepriseTitreCount);
+
+  $("#repriseRetour").addEventListener("click", () => {
+    repriseUrls.forEach(URL.revokeObjectURL);
+    repriseUrls = [];
+    repriseId = null; repriseSources = []; repriseRendu = [];
+    $("#repriseAtelier").hidden = true;
+    $("#repriseListe").hidden = false;
+    repriseCartes();
+  });
+
+  const versBlob = (cv) => new Promise((res) => cv.toBlob(res, "image/jpeg", 0.92));
+
+  $("#repriseTelecharger").addEventListener("click", async () => {
+    for (const r of repriseRendu) {
+      saveBlob(await versBlob(r.canvas), r.nom);
+      await new Promise((x) => setTimeout(x, 300));
+    }
+  });
+
+  $("#repriseEnregistrer").addEventListener("click", async () => {
+    const source = courante_(repriseId);
+    if (!source || !repriseRendu.length) return;
+    const bouton = $("#repriseEnregistrer");
+    bouton.disabled = true;
+    bouton.textContent = "Enregistrement…";
+
+    const photos = [];
+    for (const r of repriseRendu) photos.push({ name: r.nom, blob: await versBlob(r.canvas) });
+
+    const now = Date.now();
+    const rec = {
+      id: uuid(), createdAt: now, updatedAt: now, deletedAt: null,
+      statut: "a_publier",
+      titre: $("#repriseTitre").value,
+      description: source.description, mesures: source.mesures,
+      notes: (source.notes ? source.notes + "\n" : "") + "Reprise de « " + (source.titre || "Sans titre") + " ».",
+      prix: source.prix, achat: source.achat,
+      marque: source.marque, taille: source.taille, etat: source.etat,
+      vignette: await faireVignette(photos[0].blob),
+      photos, dirty: true,
+    };
+    await dbPut(rec);
+    annonces.push(rec);
+
+    bouton.disabled = false;
+    bouton.textContent = "Enregistrer comme nouvelle annonce";
+    $("#repriseRetour").click();
+    showView("annonces");
+    renderList();
+    openAnnonce(rec.id);
+    planifierSync(200);
+  });
 
   /* ================================================================
      Écran de connexion

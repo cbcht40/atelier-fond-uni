@@ -28,6 +28,14 @@ La liste s'affiche instantanément grâce à une miniature stockée avec la fich
 
 Le schéma est dans `supabase.sql`, à lancer dans l'éditeur SQL de Supabase **en deux fois** : d'abord la partie table, ensuite la partie stockage. L'éditeur exécute tout en une transaction, donc une erreur sur la fin annulerait aussi la table créée avant.
 
+## L'onglet Reprise
+
+Reprendre une annonce, c'est lui refaire des visuels et un titre à partir de ce qui est déjà enregistré, sans ressortir le vêtement. On choisit une annonce, on change la couleur de fond, on incline légèrement, on passe en miroir, on resserre le cadrage, on prend une variante de titre, et on enregistre le tout comme une nouvelle annonce au statut « à publier ». L'originale n'est pas touchée.
+
+Les visuels sont refaits à partir des photos enregistrées : le fond de celles-ci étant déjà uni, il se remplace proprement par une autre couleur.
+
+**À savoir avant de s'en servir.** Republier une annonce pour la faire remonter est contraire aux règles de Vinted et peut valoir une restriction de compte. Par ailleurs, changer le fond et l'orientation ne suffit pas à rendre deux annonces étrangères l'une à l'autre : les modèles de similarité visuelle actuels résistent au miroir, au recadrage et au changement de fond, et le rapprochement se fait aussi sur le vendeur, le prix, les mesures et le texte. Cet onglet sert à refaire une présentation, pas à passer inaperçu — aucune altération destinée à tromper une empreinte n'y est faite.
+
 ## Comment ça marche
 
 L'arrière-plan est détecté par **croissance de région** depuis les bords de l'image :
