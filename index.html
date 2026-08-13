@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Atelier — fond uni pour tes photos</title>
-<meta name="description" content="Remplace l'arrière-plan de tes photos de vêtements par une couleur unie. Tout se passe sur ton appareil, aucune photo n'est envoyée.">
+<title>Atelier — photos & annonces</title>
+<meta name="description" content="Détoure tes photos de vêtements sur fond uni et garde le carnet des annonces qui va avec. Tout reste sur ton appareil.">
 <meta name="theme-color" content="#f6f4ef">
 <style>
   /* ---- Palette : neutres papier chaud, accent indigo denim ---- */
@@ -21,6 +21,10 @@
     --accent-soft: rgba(47, 68, 112, .10);
     --warn:      #8d5f0d;
     --warn-ink:  #ffffff;
+    --good:      #2c6b47;              /* couleurs de sens, distinctes de l'accent */
+    --good-soft: rgba(44, 107, 71, .10);
+    --danger:    #9c3226;
+    --danger-soft: rgba(156, 50, 38, .10);
     --checker:   #e8e4dc;
 
     --r-sm: 6px;
@@ -44,6 +48,10 @@
       --accent-soft: rgba(157, 178, 226, .14);
       --warn:      #d9a44e;
       --warn-ink:  #1e1607;
+      --good:      #8ac9a3;
+      --good-soft: rgba(138, 201, 163, .14);
+      --danger:    #e08579;
+      --danger-soft: rgba(224, 133, 121, .14);
       --checker:   #2a2d35;
       --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
     }
@@ -61,11 +69,17 @@
     --accent-soft: rgba(157, 178, 226, .14);
     --warn:      #d9a44e;
     --warn-ink:  #1e1607;
+    --good:      #8ac9a3;
+    --good-soft: rgba(138, 201, 163, .14);
+    --danger:    #e08579;
+    --danger-soft: rgba(224, 133, 121, .14);
     --checker:   #2a2d35;
     --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
   }
 
   * { box-sizing: border-box; }
+  /* Sans ça, un .ledger ou une .chip en display:flex ignorerait son attribut hidden. */
+  [hidden] { display: none !important; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
@@ -230,6 +244,8 @@
     font-size: 12.5px; color: var(--muted); min-height: 18px;
     font-variant-numeric: tabular-nums;
   }
+  /* Sans photo chargée, la colonne de travail ne doit pas laisser un trou. */
+  #status:empty, #grid:empty { display: none; }
   #grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
   @media (min-width: 500px) { #grid { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); } }
 
@@ -279,6 +295,108 @@
   .notes li strong { color: var(--ink); font-weight: 600; }
   .notes .disclaimer { margin: 16px 0 0; font-size: 12px; color: var(--muted); }
 
+  /* Sur téléphone, l'en-tête mangeait un demi-écran avant le premier contenu utile. */
+  @media (max-width: 640px) {
+    .masthead h1 { font-size: 24px; }
+    .masthead .tagline { display: none; }
+    .masthead .assurance { margin-top: 8px; }
+    .rule { margin: 12px 0 14px; }
+    .tabs { margin-bottom: 14px; }
+  }
+
+  /* ---- Onglets ---- */
+  .tabs { display: flex; gap: 4px; margin: 0 0 20px; }
+  .tab {
+    display: inline-flex; align-items: center; gap: 7px;
+    min-height: 40px; padding: 0 14px; cursor: pointer;
+    background: none; border: 1px solid transparent; border-radius: var(--r-sm);
+    color: var(--muted); font-size: 14.5px; font-weight: 600;
+  }
+  .tab:hover { color: var(--ink); background: var(--surface-2); }
+  .tab[aria-selected="true"] {
+    color: var(--accent); background: var(--accent-soft); border-color: var(--accent-soft);
+  }
+  .tab .count {
+    font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: var(--accent); color: var(--accent-ink); font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Liste des annonces ---- */
+  .list-head { display: flex; gap: 9px; margin-bottom: 16px; flex-wrap: wrap; }
+  .list-head input[type=search] {
+    flex: 1 1 200px; min-height: 44px; padding: 0 12px;
+    border: 1px solid var(--line-firm); border-radius: var(--r-sm);
+    background: var(--surface); color: inherit;
+  }
+  .list-head select { width: auto; min-height: 44px; flex: 0 0 auto; }
+
+  #annonceList { display: grid; gap: 10px; }
+  .annonce {
+    display: flex; align-items: stretch; gap: 0; width: 100%; padding: 0; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+    box-shadow: var(--shadow); overflow: hidden; text-align: left; color: inherit;
+  }
+  .annonce:hover { border-color: var(--line-firm); }
+  .annonce .vignette {
+    width: 84px; flex: none; background: var(--surface-2);
+    background-size: cover; background-position: center;
+  }
+  .annonce .corps { flex: 1; min-width: 0; padding: 11px 13px; display: grid; gap: 5px; align-content: center; }
+  .annonce .titre {
+    font-size: 15px; font-weight: 600; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .annonce .titre.vide { color: var(--muted); font-weight: 400; font-style: italic; }
+  .annonce .meta {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    font-size: 12.5px; color: var(--muted);
+  }
+  .annonce .prix { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.a_publier { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+  .chip.en_ligne  { color: var(--good); border-color: var(--good-soft); background: var(--good-soft); }
+  .chip.vendue    { color: var(--muted); }
+  .chip.vendue::before { background: none; content: "✓"; width: auto; height: auto; font-size: 11px; }
+
+  .empty { color: var(--muted); font-size: 14px; max-width: 52ch; padding: 8px 0; }
+  .ledger {
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
+    display: flex; gap: 22px; flex-wrap: wrap; font-size: 13px; color: var(--muted);
+  }
+  .ledger b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---- Fiche annonce ---- */
+  .edit-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .edit-head .saved { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  .edit-grid { display: grid; gap: 14px; align-items: start; }
+  @media (min-width: 920px) { .edit-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; } }
+
+  #editView input[type=text], #editView input[type=number], #editView textarea, #editView select {
+    width: 100%; padding: 10px 11px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-firm); background: var(--surface-2); color: inherit;
+  }
+  #editView textarea { resize: vertical; line-height: 1.5; font-family: inherit; }
+  #editView input[type=number] { font-variant-numeric: tabular-nums; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .marge { margin: -6px 0 0; font-size: 13px; color: var(--good); font-weight: 600; }
+  .marge.perte { color: var(--warn); }
+  .btn.copy { align-self: start; }
+  .btn.danger { color: var(--danger); border-color: var(--danger-soft); }
+  .btn.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thumbs img {
+    width: 62px; height: 62px; object-fit: cover;
+    border-radius: var(--r-sm); border: 1px solid var(--line);
+  }
+
   /* ---- Barre collante mobile ---- */
   .dock {
     position: sticky; bottom: 0; z-index: 5; display: none;
@@ -295,12 +413,20 @@
 <div class="app">
 
   <header class="masthead">
-    <h1><em>Atelier</em> — fond uni</h1>
-    <p class="tagline">Des photos de vêtements sur fond propre, prêtes pour tes annonces.</p>
-    <p class="assurance">Tout est calculé sur ton appareil : aucune photo n'est envoyée</p>
+    <h1><em>Atelier</em> — photos &amp; annonces</h1>
+    <p class="tagline">Des photos sur fond propre, et le carnet des annonces qui va avec.</p>
+    <p class="assurance">Tout est calculé et rangé sur ton appareil : rien n'est envoyé</p>
   </header>
   <div class="rule" role="presentation"></div>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" class="tab" id="tabPhotos" role="tab" aria-selected="true" aria-controls="viewPhotos">Photos</button>
+    <button type="button" class="tab" id="tabAnnonces" role="tab" aria-selected="false" aria-controls="viewAnnonces">
+      Annonces <span class="count" id="tabCount" hidden>0</span>
+    </button>
+  </nav>
+
+  <div id="viewPhotos" role="tabpanel" aria-labelledby="tabPhotos">
   <div class="bench">
 
     <div class="rail">
@@ -359,7 +485,8 @@
           </div>
 
           <div class="field">
-            <button type="button" class="btn primary wide" id="dlAll">Télécharger les photos</button>
+            <button type="button" class="btn primary wide" id="toAnnonce">Créer une annonce</button>
+            <button type="button" class="btn wide" id="dlAll">Télécharger les photos</button>
             <div class="btn-row">
               <button type="button" class="btn" id="addMore">Ajouter</button>
               <button type="button" class="btn" id="clearAll">Tout retirer</button>
@@ -388,6 +515,126 @@
     </ul>
     <p class="disclaimer">Outil personnel de préparation de photos. Aucun lien avec Vinted, et aucune connexion à ton compte.</p>
   </section>
+  </div><!-- /viewPhotos -->
+
+  <div id="viewAnnonces" role="tabpanel" aria-labelledby="tabAnnonces" hidden>
+
+    <!-- Liste -->
+    <div id="listView">
+      <div class="list-head">
+        <input type="search" id="search" placeholder="Chercher une annonce" aria-label="Chercher une annonce">
+        <select id="filterStatut" aria-label="Filtrer par statut">
+          <option value="">Tous les statuts</option>
+          <option value="brouillon">Brouillon</option>
+          <option value="a_publier">À publier</option>
+          <option value="en_ligne">En ligne</option>
+          <option value="vendue">Vendue</option>
+        </select>
+      </div>
+      <div id="annonceList"></div>
+      <p id="annonceEmpty" class="empty" hidden>
+        Aucune annonce pour l'instant. Passe par l'onglet <strong>Photos</strong> : détoure tes clichés, puis « Créer une annonce ».
+      </p>
+      <div class="ledger" id="ledger" hidden></div>
+    </div>
+
+    <!-- Fiche -->
+    <div id="editView" hidden>
+      <div class="edit-head">
+        <button type="button" class="btn" id="backToList">← Annonces</button>
+        <span class="chip" id="editChip"></span>
+        <span class="saved" id="savedMark" aria-live="polite"></span>
+      </div>
+
+      <div class="edit-grid">
+        <div class="panel">
+          <div class="body">
+            <div class="field">
+              <label class="lbl" for="fTitre">Titre <span class="val" id="titreCount">0/60</span></label>
+              <input type="text" id="fTitre" maxlength="90" placeholder="Marque + type + couleur + taille">
+              <button type="button" class="btn copy" data-copy="fTitre">Copier le titre</button>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="fDescription">Description</label>
+              <textarea id="fDescription" rows="10" placeholder="Présentation, matière, coupe, état, mesures…"></textarea>
+              <button type="button" class="btn copy" data-copy="fDescription">Copier la description</button>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="fMesures">Mesures</label>
+              <textarea id="fMesures" rows="4" placeholder="Épaules 46 cm&#10;Poitrine 54 cm&#10;Longueur 68 cm"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="body">
+            <div class="field">
+              <label class="lbl" for="fStatut">Statut</label>
+              <select id="fStatut">
+                <option value="brouillon">Brouillon</option>
+                <option value="a_publier">À publier</option>
+                <option value="en_ligne">En ligne</option>
+                <option value="vendue">Vendue</option>
+              </select>
+            </div>
+
+            <div class="duo">
+              <div class="field">
+                <label class="lbl" for="fPrix">Prix de vente</label>
+                <input type="number" id="fPrix" min="0" step="0.5" inputmode="decimal" placeholder="€">
+              </div>
+              <div class="field">
+                <label class="lbl" for="fAchat">Prix d'achat</label>
+                <input type="number" id="fAchat" min="0" step="0.5" inputmode="decimal" placeholder="€">
+              </div>
+            </div>
+            <p class="marge" id="marge" hidden></p>
+
+            <div class="duo">
+              <div class="field">
+                <label class="lbl" for="fMarque">Marque</label>
+                <input type="text" id="fMarque">
+              </div>
+              <div class="field">
+                <label class="lbl" for="fTaille">Taille</label>
+                <input type="text" id="fTaille">
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="fEtat">État</label>
+              <select id="fEtat">
+                <option value="">—</option>
+                <option>Neuf avec étiquette</option>
+                <option>Neuf sans étiquette</option>
+                <option>Très bon état</option>
+                <option>Bon état</option>
+                <option>Satisfaisant</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="fNotes">Notes perso</label>
+              <textarea id="fNotes" rows="3" placeholder="Où acheté, défauts à surveiller, acheteur…"></textarea>
+            </div>
+
+            <div class="field">
+              <div class="lbl">Photos <span class="val" id="photoCount"></span></div>
+              <div class="thumbs" id="editThumbs"></div>
+              <button type="button" class="btn" id="dlAnnoncePhotos">Télécharger les photos</button>
+            </div>
+
+            <div class="field">
+              <button type="button" class="btn danger wide" id="delAnnonce">Supprimer l'annonce</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /viewAnnonces -->
 
   <div class="dock" id="dock">
     <button type="button" class="btn primary wide" id="dlAllMobile">Télécharger les photos</button>
@@ -759,10 +1006,13 @@
     item.seedTag = seedTag;
   }
 
+  let currentView = "photos";
+
   function syncChrome() {
     const has = items.length > 0;
     settings.hidden = !has;
-    dock.classList.toggle("on", has);
+    dock.classList.toggle("on", has && currentView === "photos");
+    $("#toAnnonce").disabled = !has;
   }
 
   /* ================================================================
@@ -831,21 +1081,29 @@
     return base + "-fond." + (opts.transparent ? "png" : "jpg");
   }
 
-  function exportItem(item) {
+  /** Rend la photo aux réglages courants et renvoie le fichier image. */
+  function renderBlob(item) {
     return new Promise((res) => {
       const wasOriginal = item.showOriginal;
       item.showOriginal = false;
       const { canvas } = render(item, opts.maxSide);
       item.showOriginal = wasOriginal;
-      canvas.toBlob((blob) => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = exportName(item);
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-        setTimeout(res, 300);   // laisse le navigateur enchaîner les téléchargements
-      }, opts.transparent ? "image/png" : "image/jpeg", 0.92);
+      canvas.toBlob((blob) => res(blob), opts.transparent ? "image/png" : "image/jpeg", 0.92);
     });
+  }
+
+  function saveBlob(blob, filename) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  async function exportItem(item) {
+    const blob = await renderBlob(item);
+    saveBlob(blob, exportName(item));
+    await new Promise((r) => setTimeout(r, 300));   // laisse le navigateur enchaîner
   }
 
   function downloadOne(item) {
@@ -944,6 +1202,380 @@
     setStatus("");
   });
 
+  /* ================================================================
+     Carnet d'annonces — base locale (IndexedDB)
+     ================================================================ */
+
+  const DB_NAME = "atelier-annonces", DB_VER = 1, IDB_STORE = "annonces";
+  let dbPromise = null;
+
+  function db() {
+    if (!dbPromise) {
+      dbPromise = new Promise((res, rej) => {
+        const rq = indexedDB.open(DB_NAME, DB_VER);
+        rq.onupgradeneeded = () => {
+          const d = rq.result;
+          if (!d.objectStoreNames.contains(IDB_STORE)) d.createObjectStore(IDB_STORE, { keyPath: "id" });
+        };
+        rq.onsuccess = () => res(rq.result);
+        rq.onerror = () => rej(rq.error);
+      });
+    }
+    return dbPromise;
+  }
+
+  async function dbAll() {
+    const d = await db();
+    return new Promise((res, rej) => {
+      const rq = d.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).getAll();
+      rq.onsuccess = () => res(rq.result || []);
+      rq.onerror = () => rej(rq.error);
+    });
+  }
+  async function dbPut(rec) {
+    const d = await db();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(rec);
+      tx.oncomplete = () => res(rec);
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+  async function dbDel(id) {
+    const d = await db();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).delete(id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+
+  // Identifiant stable, pensé pour une future synchronisation entre appareils.
+  const uuid = () => (crypto.randomUUID
+    ? crypto.randomUUID()
+    : "a-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10));
+
+  /* ---- État et rendu de la liste ---- */
+
+  const STATUTS = {
+    brouillon: "Brouillon",
+    a_publier: "À publier",
+    en_ligne: "En ligne",
+    vendue: "Vendue",
+  };
+
+  let annonces = [];
+  let openId = null;
+  const thumbUrls = new Map();   // id → objectURL de la vignette de liste
+
+  const listView = $("#listView"), editView = $("#editView");
+  const annonceList = $("#annonceList"), annonceEmpty = $("#annonceEmpty"), ledger = $("#ledger");
+  const searchEl = $("#search"), filterEl = $("#filterStatut"), tabCount = $("#tabCount");
+
+  const euros = (n) => (n == null || n === "" ? "" : Number(n).toFixed(2).replace(".", ",") + " €");
+  const jour = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+
+  function releaseThumbs() {
+    thumbUrls.forEach((u) => URL.revokeObjectURL(u));
+    thumbUrls.clear();
+  }
+
+  function renderList() {
+    releaseThumbs();
+    const q = searchEl.value.trim().toLowerCase();
+    const f = filterEl.value;
+    const vus = annonces
+      .filter((a) => !f || a.statut === f)
+      .filter((a) => !q || (a.titre + " " + a.marque + " " + a.notes).toLowerCase().includes(q))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    annonceList.innerHTML = "";
+    for (const a of vus) {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "annonce";
+
+      const vig = document.createElement("div");
+      vig.className = "vignette";
+      if (a.photos && a.photos.length) {
+        const u = URL.createObjectURL(a.photos[0].blob);
+        thumbUrls.set(a.id, u);
+        vig.style.backgroundImage = `url(${u})`;
+      }
+
+      const corps = document.createElement("div");
+      corps.className = "corps";
+      const titre = document.createElement("div");
+      titre.className = "titre" + (a.titre ? "" : " vide");
+      titre.textContent = a.titre || "Sans titre";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const chip = document.createElement("span");
+      chip.className = "chip " + a.statut;
+      chip.textContent = STATUTS[a.statut] || a.statut;
+      meta.append(chip);
+      if (a.prix != null && a.prix !== "") {
+        const p = document.createElement("span");
+        p.className = "prix";
+        p.textContent = euros(a.prix);
+        meta.append(p);
+      }
+      if (a.marque) { const m = document.createElement("span"); m.textContent = a.marque; meta.append(m); }
+      const d = document.createElement("span");
+      d.textContent = "modifiée le " + jour(a.updatedAt);
+      meta.append(d);
+
+      corps.append(titre, meta);
+      el.append(vig, corps);
+      el.addEventListener("click", () => openAnnonce(a.id));
+      annonceList.append(el);
+    }
+
+    annonceEmpty.hidden = annonces.length > 0;
+    tabCount.textContent = String(annonces.length);
+    tabCount.hidden = annonces.length === 0;
+    renderLedger();
+  }
+
+  async function renderLedger() {
+    if (!annonces.length) { ledger.hidden = true; return; }
+    const par = (s) => annonces.filter((a) => a.statut === s).length;
+    const vendues = annonces.filter((a) => a.statut === "vendue");
+    const ca = vendues.reduce((t, a) => t + (Number(a.prix) || 0), 0);
+    const marge = vendues.reduce((t, a) => t + (Number(a.prix) || 0) - (Number(a.achat) || 0), 0);
+
+    let place = "";
+    if (navigator.storage && navigator.storage.estimate) {
+      try {
+        const { usage } = await navigator.storage.estimate();
+        if (usage) {
+          place = usage >= 1048576
+            ? ` · ${(usage / 1048576).toFixed(1)} Mo utilisés`
+            : ` · ${Math.round(usage / 1024)} Ko utilisés`;
+        }
+      } catch (e) { /* non critique */ }
+    }
+
+    ledger.innerHTML = "";
+    const add = (label, valeur) => {
+      const s = document.createElement("span");
+      s.innerHTML = `${label} <b>${valeur}</b>`;
+      ledger.append(s);
+    };
+    add("En ligne", par("en_ligne"));
+    add("À publier", par("a_publier"));
+    add("Vendues", vendues.length);
+    if (vendues.length) { add("Encaissé", euros(ca)); add("Marge", euros(marge)); }
+    const s = document.createElement("span");
+    s.textContent = `${annonces.length} annonce${annonces.length > 1 ? "s" : ""}${place}`;
+    ledger.append(s);
+    ledger.hidden = false;
+  }
+
+  /* ---- Fiche ---- */
+
+  const champs = {
+    titre: $("#fTitre"), description: $("#fDescription"), mesures: $("#fMesures"),
+    notes: $("#fNotes"), prix: $("#fPrix"), achat: $("#fAchat"),
+    marque: $("#fMarque"), taille: $("#fTaille"), etat: $("#fEtat"), statut: $("#fStatut"),
+  };
+  const editThumbs = $("#editThumbs"), savedMark = $("#savedMark"), editChip = $("#editChip");
+  let editUrls = [];
+
+  function courante() { return annonces.find((a) => a.id === openId) || null; }
+
+  function openAnnonce(id) {
+    openId = id;
+    const a = courante();
+    if (!a) return;
+    for (const k in champs) champs[k].value = a[k] == null ? "" : a[k];
+    majTitreCount();
+    majMarge();
+    majChip();
+
+    editUrls.forEach(URL.revokeObjectURL);
+    editUrls = [];
+    editThumbs.innerHTML = "";
+    (a.photos || []).forEach((p) => {
+      const u = URL.createObjectURL(p.blob);
+      editUrls.push(u);
+      const img = document.createElement("img");
+      img.src = u; img.alt = p.name;
+      editThumbs.append(img);
+    });
+    $("#photoCount").textContent = (a.photos || []).length + " photo" + ((a.photos || []).length > 1 ? "s" : "");
+
+    listView.hidden = true;
+    editView.hidden = false;
+    savedMark.textContent = "";
+    window.scrollTo(0, 0);
+  }
+
+  function closeAnnonce() {
+    openId = null;
+    editUrls.forEach(URL.revokeObjectURL);
+    editUrls = [];
+    editView.hidden = true;
+    listView.hidden = false;
+    renderList();
+  }
+
+  function majTitreCount() {
+    const n = champs.titre.value.length;
+    const el = $("#titreCount");
+    el.textContent = n + "/60";
+    el.style.color = n > 60 ? "var(--warn)" : "";
+  }
+  function majMarge() {
+    const p = parseFloat(champs.prix.value), a = parseFloat(champs.achat.value);
+    const el = $("#marge");
+    if (isNaN(p) || isNaN(a)) { el.hidden = true; return; }
+    const m = p - a;
+    el.textContent = (m >= 0 ? "Marge " : "Perte ") + euros(Math.abs(m));
+    el.classList.toggle("perte", m < 0);
+    el.hidden = false;
+  }
+  function majChip() {
+    const s = champs.statut.value;
+    editChip.className = "chip " + s;
+    editChip.textContent = STATUTS[s];
+  }
+
+  let saveTimer = null;
+  function planifierSauvegarde() {
+    const a = courante();
+    if (!a) return;
+    savedMark.textContent = "…";
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      for (const k in champs) {
+        a[k] = (k === "prix" || k === "achat")
+          ? (champs[k].value === "" ? null : Number(champs[k].value))
+          : champs[k].value;
+      }
+      a.updatedAt = Date.now();
+      try {
+        await dbPut(a);
+        savedMark.textContent = "Enregistré";
+      } catch (e) {
+        console.error(e);
+        savedMark.textContent = "Échec de l'enregistrement";
+      }
+    }, 500);
+  }
+
+  for (const k in champs) {
+    champs[k].addEventListener("input", () => {
+      if (k === "titre") majTitreCount();
+      if (k === "prix" || k === "achat") majMarge();
+      if (k === "statut") majChip();
+      planifierSauvegarde();
+    });
+  }
+
+  document.querySelectorAll(".btn.copy").forEach((b) => {
+    b.addEventListener("click", async () => {
+      const el = document.getElementById(b.dataset.copy);
+      const initial = b.textContent;
+      try {
+        await navigator.clipboard.writeText(el.value);
+        b.textContent = "Copié";
+      } catch (e) {
+        el.select();
+        b.textContent = "Sélectionné — fais Copier";
+      }
+      setTimeout(() => { b.textContent = initial; }, 1800);
+    });
+  });
+
+  $("#backToList").addEventListener("click", closeAnnonce);
+
+  $("#delAnnonce").addEventListener("click", async () => {
+    const a = courante();
+    if (!a) return;
+    if (!confirm(`Supprimer « ${a.titre || "Sans titre"} » ? Les photos enregistrées avec elle seront perdues.`)) return;
+    await dbDel(a.id);
+    annonces = annonces.filter((x) => x.id !== a.id);
+    closeAnnonce();
+  });
+
+  $("#dlAnnoncePhotos").addEventListener("click", async () => {
+    const a = courante();
+    if (!a || !a.photos.length) return;
+    for (const p of a.photos) {
+      saveBlob(p.blob, p.name);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  });
+
+  searchEl.addEventListener("input", renderList);
+  filterEl.addEventListener("change", renderList);
+
+  /* ---- Création depuis les photos détourées ---- */
+
+  $("#toAnnonce").addEventListener("click", async () => {
+    if (!items.length) return;
+    setStatus("Préparation de l'annonce…");
+    // Demande au navigateur de ne pas évincer ces données au premier ménage.
+    if (navigator.storage && navigator.storage.persist) {
+      try { await navigator.storage.persist(); } catch (e) { /* non critique */ }
+    }
+    const photos = [];
+    for (let i = 0; i < items.length; i++) {
+      setStatus(`Préparation de l'annonce… ${i + 1}/${items.length}`);
+      await new Promise((r) => setTimeout(r, 16));
+      photos.push({ name: exportName(items[i]), blob: await renderBlob(items[i]) });
+    }
+    const now = Date.now();
+    const rec = {
+      id: uuid(), createdAt: now, updatedAt: now,
+      statut: "brouillon",
+      titre: "", description: "", mesures: "", notes: "",
+      prix: null, achat: null, marque: "", taille: "", etat: "",
+      photos,
+    };
+    try {
+      await dbPut(rec);
+    } catch (e) {
+      console.error(e);
+      setStatus("L'annonce n'a pas pu être enregistrée sur cet appareil");
+      return;
+    }
+    annonces.push(rec);
+    setStatus("");
+    showView("annonces");
+    renderList();
+    openAnnonce(rec.id);
+    champs.titre.focus();
+  });
+
+  /* ---- Onglets ---- */
+
+  function showView(v) {
+    currentView = v;
+    $("#viewPhotos").hidden = v !== "photos";
+    $("#viewAnnonces").hidden = v !== "annonces";
+    $("#tabPhotos").setAttribute("aria-selected", String(v === "photos"));
+    $("#tabAnnonces").setAttribute("aria-selected", String(v === "annonces"));
+    syncChrome();
+  }
+  $("#tabPhotos").addEventListener("click", () => showView("photos"));
+  $("#tabAnnonces").addEventListener("click", () => { showView("annonces"); if (openId) closeAnnonce(); });
+
+  async function initAnnonces() {
+    try {
+      annonces = await dbAll();
+    } catch (e) {
+      console.error("Base locale indisponible", e);
+      annonceEmpty.textContent = "Ce navigateur refuse l'accès au stockage local : les annonces ne peuvent pas être conservées ici (navigation privée ?).";
+      annonceEmpty.hidden = false;
+      return;
+    }
+    renderList();
+  }
+
   // État initial : réglages mémorisés reportés dans l'interface.
   loadOpts();
   tolEl.value = opts.tol; $("#tolVal").textContent = opts.tol;
@@ -955,6 +1587,7 @@
   const known = swatches.find((s) => s.dataset.color === (opts.transparent ? "transparent" : opts.color));
   markColor(known || null);
   syncChrome();
+  initAnnonces();
 })();
 </script>
 </body>

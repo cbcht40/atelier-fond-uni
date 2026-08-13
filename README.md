@@ -1,10 +1,21 @@
-# Atelier — fond uni
+# Atelier — photos & annonces
 
-Outil qui remplace l'arrière-plan des photos de vêtements par une couleur unie, pour préparer des annonces de seconde main.
+Deux outils dans une page, pour préparer des annonces de seconde main : le détourage des photos sur fond uni, et le carnet des annonces qui va avec.
 
 **Le site : https://cbcht40.github.io/atelier-fond-uni/**
 
-Tout le traitement se fait dans le navigateur du visiteur : aucune photo n'est envoyée, aucun serveur, aucune API. C'est ce qui rend l'hébergement gratuit de façon permanente — GitHub Pages ne sert qu'un fichier statique.
+Tout se passe dans le navigateur du visiteur : aucune photo n'est envoyée, aucun serveur, aucune API. C'est ce qui rend l'hébergement gratuit de façon permanente — GitHub Pages ne sert qu'un fichier statique.
+
+## Le carnet d'annonces
+
+Depuis l'onglet Photos, « Créer une annonce » enregistre les photos détourées dans une fiche : titre avec compteur de caractères, description, mesures, prix de vente et prix d'achat (la marge se calcule seule), marque, taille, état, notes, et un statut — brouillon, à publier, en ligne, vendue. Les boutons « Copier » servent à coller directement dans Vinted.
+
+Le bas de la liste tient les comptes : nombre d'annonces par statut, total encaissé et marge cumulée sur les ventes.
+
+Les fiches sont rangées dans la base locale du navigateur (IndexedDB) et survivent à la fermeture de l'onglet. Deux limites à connaître :
+
+- **Les annonces ne suivent pas d'un appareil à l'autre.** Chaque navigateur a son propre carnet. La synchronisation, avec connexion par mail et mot de passe, viendra dans un second temps via une base en ligne gratuite.
+- **Sur iPhone, Safari efface les données d'un site après sept jours sans visite.** Pour l'éviter, ajouter le site à l'écran d'accueil (Partager → Sur l'écran d'accueil) : les données d'une app installée ne sont pas purgées.
 
 ## Comment ça marche
 
@@ -16,6 +27,8 @@ L'arrière-plan est détecté par **croissance de région** depuis les bords de 
 4. On compose : la couleur unie remplace le fond, le vêtement est laissé intact.
 
 Une zone de fond enclavée (entre une manche et le corps, par exemple) n'est pas reliée aux bords : **toucher cette zone dans l'aperçu** l'ajoute aux amorces.
+
+Les aperçus sont calculés en 640 px pour que les curseurs restent réactifs ; l'export refait le calcul à la taille choisie.
 
 ## Modifier le site
 
