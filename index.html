@@ -659,7 +659,8 @@
       <li>Le vêtement se fait grignoter ? Baisse la sensibilité, puis retouche les zones restantes au doigt.</li>
       <li>Fond chargé — parquet à motifs, tapis, autres vêtements derrière : refais la photo, l'outil n'y arrivera pas.</li>
     </ul>
-    <p class="disclaimer">Outil personnel de préparation de photos. Aucun lien avec Vinted, et aucune connexion à ton compte.</p>
+    <p class="disclaimer">Outil personnel de préparation de photos. Aucun lien avec Vinted, et aucune connexion à ton compte.
+      <br><span id="version"></span></p>
   </section>
   </div><!-- /viewPhotos -->
 
@@ -2906,6 +2907,7 @@
   custom.value = /^#[0-9a-f]{6}$/i.test(opts.color) ? opts.color : "#c4cfd8";
   const known = swatches.find((s) => s.dataset.color === (opts.transparent ? "transparent" : opts.color));
   markColor(known || null);
+  $("#version").textContent = "Version du 14 août 2026";
   syncChrome();
   initCompte();
 })();
