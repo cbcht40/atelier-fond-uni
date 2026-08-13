@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Atelier — photos & annonces</title>
 <meta name="description" content="Détoure tes photos de vêtements sur fond uni et garde le carnet des annonces qui va avec. Tout reste sur ton appareil.">
-<meta name="theme-color" content="#f6f4ef">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14151a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" type="image/png" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Atelier">
 <!-- Site à lien privé : aucun moteur de recherche ne doit le lister. -->
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <style>
@@ -2908,6 +2914,12 @@
   const known = swatches.find((s) => s.dataset.color === (opts.transparent ? "transparent" : opts.color));
   markColor(known || null);
   $("#version").textContent = "Version du 14 août 2026";
+
+  // Le service worker va chercher la page sur le réseau à chaque ouverture :
+  // c'est lui qui évite d'avoir à vider le cache pour voir une mise à jour.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch((e) => console.warn("Service worker non installé", e));
+  }
   syncChrome();
   initCompte();
 })();
