@@ -1395,10 +1395,24 @@
   async function jeton() {
     if (!session) throw new Error("Non connecté");
     if (Date.now() > session.expires_at) {
-      const d = await authPost("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
-      retenirJetons(d);
+      try {
+        const d = await authPost("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
+        retenirJetons(d);
+      } catch (e) {
+        // Pas de réseau : on garde la session, le cache local reste utilisable.
+        // Jeton refusé : la session est morte, il faut se reconnecter.
+        if (/réseau/i.test(e.message)) throw e;
+        sessionExpiree();
+        throw new Error("Session expirée");
+      }
     }
     return session.access_token;
+  }
+
+  function sessionExpiree() {
+    poserSession(null);
+    sortir();
+    direGate("Ta session a expiré. Reconnecte-toi — tes annonces sont intactes.");
   }
 
   async function rest(chemin, opts = {}) {
@@ -1425,6 +1439,18 @@
       body: blob,
     });
     if (!r.ok) throw new Error("Envoi photo " + r.status + " — " + (await r.text()).slice(0, 160));
+  }
+
+  async function effacerFichier(chemin) {
+    const t = await jeton();
+    const r = await fetch(SB_URL + "/storage/v1/object/photos/" + chemin, {
+      method: "DELETE",
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + t },
+    });
+    // Un fichier déjà absent n'est pas une erreur à faire remonter.
+    if (!r.ok && r.status !== 404 && r.status !== 400) {
+      throw new Error("Effacement photo " + r.status);
+    }
   }
 
   async function telecharger(chemin) {
@@ -1499,6 +1525,12 @@
     try {
       // 1. Envoyer ce qui a changé ici.
       for (const a of annonces.filter((x) => x.dirty)) {
+        if (a.deletedAt) {
+          for (const p of a.photos) {
+            if (p.path) await effacerFichier(p.path);
+          }
+          a.photos = [];
+        }
         for (let i = 0; i < a.photos.length; i++) {
           const p = a.photos[i];
           if (!p.path && p.blob) {
@@ -1524,6 +1556,7 @@
         const distantMs = Date.parse(ligne.updated_at);
         if (locale && locale.updatedAt >= distantMs) continue;   // la version d'ici est la plus récente
         const rec = depuisLigne(ligne, locale);
+        if (rec.deletedAt) rec.photos = [];   // annonce effacée ailleurs : on rend la place ici aussi
         if (locale) Object.assign(locale, rec);
         else annonces.push(rec);
         await dbPut(locale || rec);
@@ -1833,7 +1866,9 @@
     a.deletedAt = Date.now();
     a.updatedAt = a.deletedAt;
     a.dirty = true;
-    a.photos = [];
+    // On garde les chemins jusqu'à ce que la synchro ait pu effacer les fichiers ;
+    // les images elles-mêmes partent tout de suite pour libérer la place.
+    a.photos = a.photos.filter((p) => p.path).map((p) => ({ name: p.name, path: p.path }));
     await dbPut(a);
     closeAnnonce();
     planifierSync(200);
