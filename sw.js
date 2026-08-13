@@ -1,4 +1,4 @@
-/* Service worker de l'Atelier.
+/* Service worker de VintGo.
  *
  * Son seul vrai rôle : que l'application ouverte depuis l'écran d'accueil
  * affiche toujours la dernière version publiée, sans vider le cache à la main.
@@ -6,7 +6,7 @@
  * filet quand il n'y a pas de connexion.
  */
 
-const CACHE = "atelier-v1";
+const CACHE = "vintgo-v1";
 const ESSENTIELS = ["./", "./manifest.webmanifest", "./icone-192.png", "./icone-512.png", "./icone-180.png"];
 
 self.addEventListener("install", (e) => {

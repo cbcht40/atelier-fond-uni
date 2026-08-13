@@ -1,6 +1,6 @@
-# Atelier — photos & annonces
+# VintGo — photos & annonces
 
-Deux outils dans une page, pour préparer des annonces de seconde main : le détourage des photos sur fond uni, et le carnet des annonces qui va avec.
+VintGo réunit dans une page ce qu'il faut pour préparer des annonces de seconde main : le détourage des photos sur fond uni, et le carnet des annonces qui va avec.
 
 **Le site : https://cbcht40.github.io/atelier-fond-uni/**
 
@@ -69,6 +69,10 @@ Repères dans le fichier :
 ## Limites connues
 
 Fond chargé (parquet à motifs, tapis, autres vêtements en arrière-plan), ou vêtement de la même couleur que le fond : la détection échoue, et la page l'annonce plutôt que de rendre une image ratée. Dans ce cas, refaire la photo sur fond uni.
+
+## Le nom
+
+VintGo est un outil personnel. Il n'a aucun lien avec Vinted, n'en est pas un service officiel ou affilié, et ne se connecte jamais à un compte Vinted : la publication des annonces reste manuelle, par copier-coller.
 
 ## Licence
 
