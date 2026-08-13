@@ -1758,6 +1758,9 @@
     editUrls = [];
     editThumbs.innerHTML = "";
     (a.photos || []).forEach((p) => {
+      // Une photo venue d'un autre appareil n'a qu'un chemin tant qu'elle n'est
+      // pas retéléchargée : pas de fichier, donc pas de vignette à fabriquer.
+      if (!p.blob) return;
       const u = URL.createObjectURL(p.blob);
       editUrls.push(u);
       const img = document.createElement("img");

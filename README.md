@@ -12,10 +12,21 @@ Depuis l'onglet Photos, « Créer une annonce » enregistre les photos détouré
 
 Le bas de la liste tient les comptes : nombre d'annonces par statut, total encaissé et marge cumulée sur les ventes.
 
-Les fiches sont rangées dans la base locale du navigateur (IndexedDB) et survivent à la fermeture de l'onglet. Deux limites à connaître :
+## Compte et synchronisation
 
-- **Les annonces ne suivent pas d'un appareil à l'autre.** Chaque navigateur a son propre carnet. La synchronisation, avec connexion par mail et mot de passe, viendra dans un second temps via une base en ligne gratuite.
-- **Sur iPhone, Safari efface les données d'un site après sept jours sans visite.** Pour l'éviter, ajouter le site à l'écran d'accueil (Partager → Sur l'écran d'accueil) : les données d'une app installée ne sont pas purgées.
+L'accès demande une connexion par mail et mot de passe. Les annonces sont rattachées au compte, pas à l'appareil : saisies sur le téléphone, retrouvées sur l'ordinateur.
+
+Chaque compte ne voit que ses propres annonces, et la règle est posée sur le serveur, pas dans la page — un compte qui tente de lire ou d'écrire les lignes d'un autre est refusé par la base elle-même. Les photos sont rangées dans un espace privé, un dossier par compte, soumis aux mêmes règles.
+
+Le carnet local (IndexedDB) sert de cache : l'outil reste utilisable sans réseau et rattrape son retard au retour de la connexion. Un bandeau en haut indique « À jour », « Synchronisation… » ou « Hors ligne — N en attente ».
+
+La liste s'affiche instantanément grâce à une miniature stockée avec la fiche ; les photos en pleine taille ne se téléchargent qu'à l'ouverture de l'annonce.
+
+**Sur iPhone, Safari efface les données locales d'un site après sept jours sans visite.** Le cache local disparaît alors, mais pas les annonces : elles sont sur le serveur et reviennent à la connexion suivante. Ajouter le site à l'écran d'accueil (Partager → Sur l'écran d'accueil) évite la purge.
+
+### Mise en place côté serveur
+
+Le schéma est dans `supabase.sql`, à lancer dans l'éditeur SQL de Supabase **en deux fois** : d'abord la partie table, ensuite la partie stockage. L'éditeur exécute tout en une transaction, donc une erreur sur la fin annulerait aussi la table créée avant.
 
 ## Comment ça marche
 
