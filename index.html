@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Atelier — photos & annonces</title>
 <meta name="description" content="Détoure tes photos de vêtements sur fond uni et garde le carnet des annonces qui va avec. Tout reste sur ton appareil.">
-<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14151a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f6f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101718" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="icon" type="image/png" href="icone-192.png">
@@ -15,25 +15,27 @@
 <!-- Site à lien privé : aucun moteur de recherche ne doit le lister. -->
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
 <style>
-  /* ---- Palette : neutres papier chaud, accent indigo denim ---- */
+  /* ---- Palette : neutres froids, accent turquoise ---- */
   :root {
-    --paper:     #f6f4ef;
+    --paper:     #f4f6f7;
     --surface:   #ffffff;
-    --surface-2: #faf8f4;
-    --line:      #e3ded4;
-    --line-firm: #cec7b9;
-    --ink:       #1b1917;
-    --muted:     #6b645c;   /* 5,3:1 sur le fond papier — le gris plus clair passait sous 4,5:1 */
-    --accent:    #2f4470;
+    --surface-2: #f8fafa;
+    --line:      #e1e8e9;
+    --line-firm: #c6d1d2;
+    --ink:       #16272a;
+    --muted:     #5c6c6f;   /* 5,0:1 sur le fond — un gris plus clair passerait sous 4,5:1 */
+    --accent:    #0a7d85;   /* turquoise assombri : le vif ne tient pas le contraste du texte */
+    --accent-vif:#09b1ba;
     --accent-ink:#ffffff;
-    --accent-soft: rgba(47, 68, 112, .10);
+    --accent-soft: rgba(10, 125, 133, .10);
     --warn:      #8d5f0d;
     --warn-ink:  #ffffff;
-    --good:      #2c6b47;              /* couleurs de sens, distinctes de l'accent */
-    --good-soft: rgba(44, 107, 71, .10);
+    --warn-soft: rgba(141, 95, 13, .10);
+    --good:      #24704b;              /* couleurs de sens, distinctes de l'accent */
+    --good-soft: rgba(36, 112, 75, .10);
     --danger:    #9c3226;
     --danger-soft: rgba(156, 50, 38, .10);
-    --checker:   #e8e4dc;
+    --checker:   #e4eaeb;
 
     --r-sm: 6px;
     --r-md: 10px;
@@ -44,44 +46,48 @@
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper:     #14151a;
-      --surface:   #1c1e25;
-      --surface-2: #22252d;
-      --line:      #32363f;
-      --line-firm: #454a55;
-      --ink:       #e9e7e2;
-      --muted:     #9b968d;
-      --accent:    #9db2e2;
-      --accent-ink:#111621;
-      --accent-soft: rgba(157, 178, 226, .14);
+      --paper:     #101718;
+      --surface:   #182124;
+      --surface-2: #1e292b;
+      --line:      #2b3639;
+      --line-firm: #3f4d51;
+      --ink:       #e8eded;
+      --muted:     #93a3a5;
+      --accent:    #4fd1d9;
+      --accent-vif:#09b1ba;
+      --accent-ink:#052227;
+      --accent-soft: rgba(79, 209, 217, .14);
       --warn:      #d9a44e;
       --warn-ink:  #1e1607;
-      --good:      #8ac9a3;
-      --good-soft: rgba(138, 201, 163, .14);
+      --warn-soft: rgba(217, 164, 78, .14);
+      --good:      #7fc9a4;
+      --good-soft: rgba(127, 201, 164, .14);
       --danger:    #e08579;
       --danger-soft: rgba(224, 133, 121, .14);
-      --checker:   #2a2d35;
+      --checker:   #273235;
       --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
     }
   }
   :root[data-theme="dark"] {
-    --paper:     #14151a;
-    --surface:   #1c1e25;
-    --surface-2: #22252d;
-    --line:      #32363f;
-    --line-firm: #454a55;
-    --ink:       #e9e7e2;
-    --muted:     #9b968d;
-    --accent:    #9db2e2;
-    --accent-ink:#111621;
-    --accent-soft: rgba(157, 178, 226, .14);
+    --paper:     #101718;
+    --surface:   #182124;
+    --surface-2: #1e292b;
+    --line:      #2b3639;
+    --line-firm: #3f4d51;
+    --ink:       #e8eded;
+    --muted:     #93a3a5;
+    --accent:    #4fd1d9;
+    --accent-vif:#09b1ba;
+    --accent-ink:#052227;
+    --accent-soft: rgba(79, 209, 217, .14);
     --warn:      #d9a44e;
     --warn-ink:  #1e1607;
-    --good:      #8ac9a3;
-    --good-soft: rgba(138, 201, 163, .14);
+    --warn-soft: rgba(217, 164, 78, .14);
+    --good:      #7fc9a4;
+    --good-soft: rgba(127, 201, 164, .14);
     --danger:    #e08579;
     --danger-soft: rgba(224, 133, 121, .14);
-    --checker:   #2a2d35;
+    --checker:   #273235;
     --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
   }
 
@@ -338,6 +344,8 @@
     margin: 0 0 14px; font-size: 12.5px; color: var(--muted);
   }
   .account .mail { margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45vw; }
+  /* Les deux boutons restent solidaires : sinon ils se séparent au passage à la ligne. */
+  .account .actions { display: flex; gap: 8px; flex: none; }
   .account .sync { display: inline-flex; align-items: center; gap: 6px; }
   .account .sync::before {
     content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none;
@@ -348,20 +356,27 @@
 
   /* ---- Onglets ---- */
   /* Quatre onglets ne tiennent pas sur une ligne de téléphone : on les laisse passer à la suivante. */
-  .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 20px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
   .tab {
-    display: inline-flex; align-items: center; gap: 7px;
-    min-height: 40px; padding: 0 14px; cursor: pointer;
-    background: none; border: 1px solid transparent; border-radius: var(--r-sm);
-    color: var(--muted); font-size: 14.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 50px; padding: 0 22px; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    color: var(--muted); font-size: 16px; font-weight: 600;
+    transition: background .15s, color .15s, border-color .15s;
   }
-  .tab:hover { color: var(--ink); background: var(--surface-2); }
+  .tab:hover { color: var(--ink); border-color: var(--line-firm); }
   .tab[aria-selected="true"] {
-    color: var(--accent); background: var(--accent-soft); border-color: var(--accent-soft);
+    color: var(--accent-ink); background: var(--accent); border-color: transparent;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 32%, transparent);
   }
   .tab .count {
-    font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
     background: var(--accent); color: var(--accent-ink); font-variant-numeric: tabular-nums;
+  }
+  .tab[aria-selected="true"] .count { background: rgba(255, 255, 255, .22); color: inherit; }
+  @media (max-width: 420px) {
+    .tab { min-height: 46px; padding: 0 16px; font-size: 15px; }
+    .tabs { gap: 6px; }
   }
 
   /* ---- Liste des annonces ---- */
@@ -403,9 +418,9 @@
     background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
   }
   .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .chip.a_publier { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
-  .chip.en_ligne  { color: var(--good); border-color: var(--good-soft); background: var(--good-soft); }
-  .chip.vendue    { color: var(--muted); }
+  .chip.a_publier { color: var(--warn); border-color: var(--warn-soft); background: var(--warn-soft); }
+  .chip.en_ligne  { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+  .chip.vendue    { color: var(--good); border-color: var(--good-soft); background: var(--good-soft); }
   .chip.vendue::before { background: none; content: "✓"; width: auto; height: auto; font-size: 11px; }
 
   .empty { color: var(--muted); font-size: 14px; max-width: 52ch; padding: 8px 0; }
@@ -565,8 +580,10 @@
   <div class="account" id="account">
     <span class="sync" id="syncState"></span>
     <span class="mail" id="who"></span>
-    <button type="button" class="btn petit" id="btnSync">Synchroniser</button>
-    <button type="button" class="btn petit" id="signOut">Déconnexion</button>
+    <span class="actions">
+      <button type="button" class="btn petit" id="btnSync">Synchroniser</button>
+      <button type="button" class="btn petit" id="signOut">Déconnexion</button>
+    </span>
   </div>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
