@@ -110,11 +110,11 @@
   /* ---- En-tête ---- */
   .masthead h1 {
     font-family: var(--serif);
-    font-size: clamp(27px, 6vw, 36px);
+    font-size: clamp(42px, 11vw, 62px);
     font-weight: 400;
-    letter-spacing: .01em;
+    line-height: 1.02;
+    letter-spacing: -.015em;
     margin: 0;
-    text-wrap: balance;
   }
   .masthead h1 em { font-style: italic; color: var(--accent); }
   .masthead .tagline { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
@@ -163,14 +163,27 @@
 
   /* ---- Dépôt ---- */
   #drop {
-    display: block; width: 100%; text-align: left; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 100%; min-height: 220px; gap: 4px; text-align: center; cursor: pointer;
     background: var(--surface-2); border: 2px dashed var(--line-firm);
-    border-radius: var(--r-md); padding: 26px 22px; color: inherit;
+    border-radius: 16px; padding: 30px 24px; color: inherit;
     transition: border-color .15s, background .15s;
   }
   #drop:hover, #drop.over { border-color: var(--accent); background: var(--accent-soft); }
-  #drop b { display: block; font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
-  #drop span { display: block; margin-top: 5px; color: var(--muted); font-size: 13.5px; }
+  #drop::before {
+    content: "+";
+    display: flex; align-items: center; justify-content: center;
+    width: 62px; height: 62px; margin-bottom: 12px;
+    border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+    font-size: 38px; font-weight: 300; line-height: 1; padding-bottom: 4px;
+  }
+  #drop b { display: block; font-size: 24px; font-weight: 600; letter-spacing: -.015em; }
+  #drop span { display: block; color: var(--muted); font-size: 14px; }
+  @media (max-width: 420px) {
+    #drop { min-height: 190px; }
+    #drop::before { width: 54px; height: 54px; font-size: 33px; }
+    #drop b { font-size: 21px; }
+  }
 
   /* ---- Champs ---- */
   .field { display: grid; gap: 9px; }
@@ -297,22 +310,26 @@
   .tools .btn:hover { background: var(--surface-2); border-color: var(--line); }
 
   /* ---- Notes ---- */
+  /* Les conseils se lisent une fois : repliés, ils ne coûtent qu'une ligne. */
   .notes {
     border-top: 1px solid var(--line);
-    margin: 30px 0 0; padding-top: 14px; max-width: 62ch;
+    margin: 30px 0 0; padding-top: 12px; max-width: 62ch;
   }
-  .notes h2 {
-    font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--muted); margin: 0 0 7px; opacity: .85;
+  .notes summary {
+    cursor: pointer; list-style: none;
+    font-size: 11.5px; color: var(--muted); padding: 2px 0;
   }
-  .notes ul { margin: 0; padding-left: 15px; display: grid; gap: 4px; font-size: 12px; line-height: 1.45; color: var(--muted); }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary::before { content: "▸ "; }
+  .notes details[open] summary::before { content: "▾ "; }
+  .notes summary:hover { color: var(--ink); }
+  .notes ul { margin: 8px 0 0; padding-left: 15px; display: grid; gap: 4px; font-size: 12px; line-height: 1.45; color: var(--muted); }
   .notes li strong { color: var(--muted); font-weight: 600; }
-  .notes .disclaimer { margin: 11px 0 0; font-size: 10.5px; color: var(--muted); opacity: .8; }
+  .notes .disclaimer { margin: 10px 0 0; font-size: 10.5px; color: var(--muted); opacity: .8; }
 
   /* Sur téléphone, l'en-tête mangeait un demi-écran avant le premier contenu utile. */
   @media (max-width: 640px) {
-    .masthead h1 { font-size: 24px; }
-    .masthead .tagline { display: none; }
+    .masthead .tagline { font-size: 14px; }
     .masthead .assurance { margin-top: 8px; }
     .rule { margin: 12px 0 14px; }
     .tabs { margin-bottom: 14px; }
@@ -543,9 +560,9 @@
 <div class="app">
 
   <header class="masthead">
-    <h1>Vint<em>Go</em> — photos &amp; annonces</h1>
-    <p class="tagline">Des photos sur fond propre, et le carnet des annonces qui va avec.</p>
-    <p class="assurance">Tout est calculé et rangé sur ton appareil : rien n'est envoyé</p>
+    <h1>Vint<em>Go</em></h1>
+    <p class="tagline">Photos sur fond propre, carnet d'annonces, reprise et compta.</p>
+    <p class="assurance">Tout reste sur ton appareil</p>
   </header>
   <div class="rule" role="presentation"></div>
 
@@ -674,14 +691,16 @@
   </div>
 
   <section class="notes">
-    <h2>Pour un bon résultat</h2>
-    <ul>
+    <details>
+      <summary>Conseils pour un bon résultat</summary>
+      <ul>
       <li>Pose le vêtement à plat sur un fond <strong>uni et bien contrasté</strong> : drap, sol, mur. Le fond doit avoir une couleur franchement différente du vêtement.</li>
       <li>Lumière régulière, sans ombre dure — près d'une fenêtre en journée, c'est l'idéal.</li>
       <li>Une zone de fond a été oubliée ? <strong>Touche-la dans l'aperçu</strong> pour l'ajouter à la découpe.</li>
       <li>Le vêtement se fait grignoter ? Baisse la sensibilité, puis retouche les zones restantes au doigt.</li>
       <li>Fond chargé — parquet à motifs, tapis, autres vêtements derrière : refais la photo, l'outil n'y arrivera pas.</li>
-    </ul>
+      </ul>
+    </details>
     <p class="disclaimer">VintGo est un outil personnel de préparation d'annonces. Il n'a aucun lien avec Vinted, n'en est pas un service, et ne se connecte pas à ton compte Vinted.
       <br><span id="version"></span></p>
   </section>
