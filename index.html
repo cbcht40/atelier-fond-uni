@@ -341,7 +341,8 @@
   .btn.petit { min-height: 34px; padding: 0 10px; font-size: 12.5px; }
 
   /* ---- Onglets ---- */
-  .tabs { display: flex; gap: 4px; margin: 0 0 20px; }
+  /* Quatre onglets ne tiennent pas sur une ligne de téléphone : on les laisse passer à la suivante. */
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 20px; }
   .tab {
     display: inline-flex; align-items: center; gap: 7px;
     min-height: 40px; padding: 0 14px; cursor: pointer;
@@ -414,7 +415,8 @@
   .edit-grid { display: grid; gap: 14px; align-items: start; }
   @media (min-width: 920px) { .edit-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; } }
 
-  #editView input[type=text], #editView input[type=number], #editView textarea, #editView select,
+  #editView input[type=text], #editView input[type=number], #editView input[type=date],
+  #editView textarea, #editView select,
   #viewReprise input[type=text] {
     width: 100%; padding: 10px 11px; border-radius: var(--r-sm);
     border: 1px solid var(--line-firm); background: var(--surface-2); color: inherit;
@@ -445,6 +447,64 @@
     background: var(--surface-2); color: inherit;
   }
   .variantes button:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* ---- Compta ---- */
+  .compta-tete { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .compta-tete select {
+    width: auto; min-height: 42px; padding: 0 10px;
+    border: 1px solid var(--line-firm); border-radius: var(--r-sm);
+    background: var(--surface-2); color: inherit;
+  }
+  .compta-tete .btn { margin-left: auto; }
+
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; }
+  .tuile {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); box-shadow: var(--shadow); padding: 13px 15px;
+  }
+  .tuile .quoi {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tuile .combien {
+    font-size: 23px; font-weight: 600; margin-top: 5px;
+    font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+  }
+  .tuile .combien.bien { color: var(--good); }
+  .tuile .combien.mal { color: var(--danger); }
+  .tuile .detail { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .bloc { margin-top: 26px; }
+  .bloc h2 {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .tableau { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+  .tableau table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .tableau th, .tableau td { padding: 9px 12px; text-align: left; white-space: nowrap; }
+  .tableau th {
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--line);
+  }
+  .tableau tbody tr + tr td { border-top: 1px solid var(--line); }
+  .tableau td.num, .tableau th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tableau tfoot td { border-top: 2px solid var(--line-firm); font-weight: 700; }
+  .tableau .vide { color: var(--muted); padding: 16px; font-size: 13.5px; }
+  .tableau .sup {
+    border: 0; background: none; color: var(--muted); cursor: pointer;
+    font-size: 15px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+  }
+  .tableau .sup:hover { color: var(--danger); background: var(--danger-soft); }
+
+  .frais-saisie { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .frais-saisie input[type=text] { flex: 1 1 160px; min-width: 0; }
+  .frais-saisie input[type=number] { width: 96px; }
+  .frais-saisie input, .frais-saisie select {
+    min-height: 42px; padding: 0 10px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-firm); background: var(--surface-2); color: inherit;
+  }
+  /* Sans width auto, le menu reprend le 100 % de la règle générale et casse la ligne. */
+  .frais-saisie select { width: auto; }
 
   /* ---- Barre collante mobile ---- */
   .dock {
@@ -509,6 +569,7 @@
       Annonces <span class="count" id="tabCount" hidden>0</span>
     </button>
     <button type="button" class="tab" id="tabReprise" role="tab" aria-selected="false" aria-controls="viewReprise">Reprise</button>
+    <button type="button" class="tab" id="tabCompta" role="tab" aria-selected="false" aria-controls="viewCompta">Compta</button>
   </nav>
 
   <div id="viewPhotos" role="tabpanel" aria-labelledby="tabPhotos">
@@ -692,6 +753,22 @@
               </div>
             </div>
 
+            <div class="duo">
+              <div class="field">
+                <label class="lbl" for="fDateAchat">Acheté le</label>
+                <input type="date" id="fDateAchat">
+              </div>
+              <div class="field">
+                <label class="lbl" for="fDateVente">Vendu le</label>
+                <input type="date" id="fDateVente">
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="lbl" for="fProvenance">Provenance</label>
+              <input type="text" id="fProvenance" placeholder="Emmaüs, vide-grenier, particulier…">
+            </div>
+
             <div class="field">
               <label class="lbl" for="fEtat">État</label>
               <select id="fEtat">
@@ -797,6 +874,50 @@
     </div>
 
   </div><!-- /viewReprise -->
+
+  <div id="viewCompta" role="tabpanel" aria-labelledby="tabCompta" hidden>
+
+    <div class="compta-tete">
+      <select id="comptaAnnee" aria-label="Année"></select>
+      <button type="button" class="btn petit" id="comptaCsv">Exporter en CSV</button>
+    </div>
+
+    <div class="tuiles" id="comptaTuiles"></div>
+
+    <section class="bloc">
+      <h2>Par mois</h2>
+      <div class="tableau"><table id="comptaMois"></table></div>
+    </section>
+
+    <section class="bloc">
+      <h2>Ventes encaissées</h2>
+      <div class="tableau"><table id="comptaVentes"></table></div>
+    </section>
+
+    <section class="bloc">
+      <h2>Achats</h2>
+      <div class="tableau"><table id="comptaAchats"></table></div>
+    </section>
+
+    <section class="bloc">
+      <h2>Autres frais</h2>
+      <p class="hint">Emballages, boosts, déplacements — tout ce qui ne se rattache pas à une pièce précise.</p>
+      <div class="frais-saisie">
+        <input type="date" id="fraisDate" aria-label="Date">
+        <input type="text" id="fraisLibelle" placeholder="Libellé" aria-label="Libellé">
+        <input type="number" id="fraisMontant" step="0.01" min="0" placeholder="€" inputmode="decimal" aria-label="Montant">
+        <select id="fraisCategorie" aria-label="Catégorie">
+          <option value="emballage">Emballage</option>
+          <option value="transport">Transport</option>
+          <option value="boost">Mise en avant</option>
+          <option value="autre">Autre</option>
+        </select>
+        <button type="button" class="btn" id="fraisAjouter">Ajouter</button>
+      </div>
+      <div class="tableau"><table id="comptaFrais"></table></div>
+    </section>
+
+  </div><!-- /viewCompta -->
 
   <div class="dock" id="dock">
     <button type="button" class="btn primary wide" id="dlAllMobile">Télécharger les photos</button>
@@ -1372,7 +1493,7 @@
      Carnet d'annonces — base locale (IndexedDB)
      ================================================================ */
 
-  const DB_NAME = "atelier-annonces", DB_VER = 1, IDB_STORE = "annonces";
+  const DB_NAME = "atelier-annonces", DB_VER = 2, IDB_STORE = "annonces", IDB_FRAIS = "frais";
   let dbPromise = null;
 
   function db() {
@@ -1382,6 +1503,7 @@
         rq.onupgradeneeded = () => {
           const d = rq.result;
           if (!d.objectStoreNames.contains(IDB_STORE)) d.createObjectStore(IDB_STORE, { keyPath: "id" });
+          if (!d.objectStoreNames.contains(IDB_FRAIS)) d.createObjectStore(IDB_FRAIS, { keyPath: "id" });
         };
         rq.onsuccess = () => res(rq.result);
         rq.onerror = () => rej(rq.error);
@@ -1390,28 +1512,28 @@
     return dbPromise;
   }
 
-  async function dbAll() {
+  async function dbAll(magasin = IDB_STORE) {
     const d = await db();
     return new Promise((res, rej) => {
-      const rq = d.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).getAll();
+      const rq = d.transaction(magasin, "readonly").objectStore(magasin).getAll();
       rq.onsuccess = () => res(rq.result || []);
       rq.onerror = () => rej(rq.error);
     });
   }
-  async function dbPut(rec) {
+  async function dbPut(rec, magasin = IDB_STORE) {
     const d = await db();
     return new Promise((res, rej) => {
-      const tx = d.transaction(IDB_STORE, "readwrite");
-      tx.objectStore(IDB_STORE).put(rec);
+      const tx = d.transaction(magasin, "readwrite");
+      tx.objectStore(magasin).put(rec);
       tx.oncomplete = () => res(rec);
       tx.onerror = () => rej(tx.error);
     });
   }
-  async function dbDel(id) {
+  async function dbDel(id, magasin = IDB_STORE) {
     const d = await db();
     return new Promise((res, rej) => {
-      const tx = d.transaction(IDB_STORE, "readwrite");
-      tx.objectStore(IDB_STORE).delete(id);
+      const tx = d.transaction(magasin, "readwrite");
+      tx.objectStore(magasin).delete(id);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -1567,6 +1689,8 @@
       deleted_at: a.deletedAt ? iso(a.deletedAt) : null,
       statut: a.statut, titre: a.titre, description: a.description, mesures: a.mesures,
       notes: a.notes, prix: a.prix, achat: a.achat,
+      date_vente: a.dateVente || null, date_achat: a.dateAchat || null,
+      provenance: a.provenance || "",
       marque: a.marque, taille: a.taille, etat: a.etat,
       vignette: a.vignette || null,
       photos: a.photos.filter((p) => p.path).map((p) => ({ name: p.name, path: p.path })),
@@ -1586,6 +1710,8 @@
       mesures: ligne.mesures || "", notes: ligne.notes || "",
       prix: ligne.prix == null ? null : Number(ligne.prix),
       achat: ligne.achat == null ? null : Number(ligne.achat),
+      dateVente: ligne.date_vente || "", dateAchat: ligne.date_achat || "",
+      provenance: ligne.provenance || "",
       marque: ligne.marque || "", taille: ligne.taille || "", etat: ligne.etat || "",
       vignette: ligne.vignette || null,
       photos: (ligne.photos || []).map((p) => ({ name: p.name, path: p.path, blob: dejaLa.get(p.path) || null })),
@@ -1603,7 +1729,7 @@
     el.textContent = texte;
   }
 
-  function enAttente() { return annonces.filter((a) => a.dirty).length; }
+  function enAttente() { return annonces.filter((a) => a.dirty).length + frais.filter((f) => f.dirty).length; }
 
   function planifierSync(delai = 1500) {
     clearTimeout(syncTimer);
@@ -1641,6 +1767,22 @@
         await dbPut(a);
       }
 
+      // 1 bis. Les frais suivent le même chemin, en plus simple : pas de fichiers.
+      for (const f of frais.filter((x) => x.dirty)) {
+        await rest("frais", {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates" },
+          body: JSON.stringify({
+            id: f.id, user_id: session.user.id,
+            created_at: iso(f.createdAt), updated_at: iso(f.updatedAt),
+            deleted_at: f.deletedAt ? iso(f.deletedAt) : null,
+            date: f.date, libelle: f.libelle, montant: f.montant, categorie: f.categorie,
+          }),
+        });
+        f.dirty = false;
+        await dbPut(f, IDB_FRAIS);
+      }
+
       // 2. Récupérer ce qui a changé ailleurs.
       const lignes = await (await rest("annonces?select=*")).json();
       let touche = false;
@@ -1656,8 +1798,25 @@
         touche = true;
       }
 
+      const lignesFrais = await (await rest("frais?select=*")).json();
+      for (const l of lignesFrais) {
+        const locale = frais.find((x) => x.id === l.id);
+        const distantMs = Date.parse(l.updated_at);
+        if (locale && locale.updatedAt >= distantMs) continue;
+        const rec = {
+          id: l.id, createdAt: Date.parse(l.created_at), updatedAt: distantMs,
+          deletedAt: l.deleted_at ? Date.parse(l.deleted_at) : null,
+          date: l.date, libelle: l.libelle || "", montant: Number(l.montant) || 0,
+          categorie: l.categorie || "autre", dirty: false,
+        };
+        if (locale) Object.assign(locale, rec); else frais.push(rec);
+        await dbPut(locale || rec, IDB_FRAIS);
+        touche = true;
+      }
+
       if (touche) {
         renderList();
+        if (currentView === "compta") { majAnnees(); dessinerCompta(); }
         if (openId) { const a = courante(); if (a) openAnnonce(a.id); }
       }
       majEtatSync("", "À jour");
@@ -1832,6 +1991,7 @@
     titre: $("#fTitre"), description: $("#fDescription"), mesures: $("#fMesures"),
     notes: $("#fNotes"), prix: $("#fPrix"), achat: $("#fAchat"),
     marque: $("#fMarque"), taille: $("#fTaille"), etat: $("#fEtat"), statut: $("#fStatut"),
+    dateAchat: $("#fDateAchat"), dateVente: $("#fDateVente"), provenance: $("#fProvenance"),
   };
   const editThumbs = $("#editThumbs"), savedMark = $("#savedMark"), editChip = $("#editChip");
   let editUrls = [];
@@ -1933,7 +2093,14 @@
     champs[k].addEventListener("input", () => {
       if (k === "titre") majTitreCount();
       if (k === "prix" || k === "achat") majMarge();
-      if (k === "statut") majChip();
+      if (k === "statut") {
+        majChip();
+        // Passer une annonce en « vendue » date la vente du jour si rien n'est saisi :
+        // c'est cette date qui range l'encaissement dans le bon mois.
+        if (champs.statut.value === "vendue" && !champs.dateVente.value) {
+          champs.dateVente.value = new Date().toISOString().slice(0, 10);
+        }
+      }
       planifierSauvegarde();
     });
   }
@@ -2065,6 +2232,7 @@
       statut: "brouillon",
       titre: "", description: "", mesures: "", notes: "",
       prix: null, achat: null, marque: "", taille: "", etat: "",
+      dateVente: "", dateAchat: "", provenance: "",
       vignette: photos.length ? await faireVignette(photos[0].blob) : null,
       photos, dirty: true,
     };
@@ -2091,14 +2259,17 @@
     $("#viewPhotos").hidden = v !== "photos";
     $("#viewAnnonces").hidden = v !== "annonces";
     $("#viewReprise").hidden = v !== "reprise";
+    $("#viewCompta").hidden = v !== "compta";
     $("#tabPhotos").setAttribute("aria-selected", String(v === "photos"));
     $("#tabAnnonces").setAttribute("aria-selected", String(v === "annonces"));
     $("#tabReprise").setAttribute("aria-selected", String(v === "reprise"));
+    $("#tabCompta").setAttribute("aria-selected", String(v === "compta"));
     syncChrome();
   }
   $("#tabPhotos").addEventListener("click", () => showView("photos"));
   $("#tabAnnonces").addEventListener("click", () => { showView("annonces"); if (openId) closeAnnonce(); });
   $("#tabReprise").addEventListener("click", () => { showView("reprise"); $("#repriseRetour").click(); });
+  $("#tabCompta").addEventListener("click", () => { showView("compta"); majAnnees(); dessinerCompta(); });
 
   async function initAnnonces() {
     try {
@@ -2109,6 +2280,7 @@
       annonceEmpty.hidden = false;
       return;
     }
+    try { frais = await dbAll(IDB_FRAIS); } catch (e) { frais = []; }
     // Reprise des annonces créées avant l'arrivée des comptes : sans ce marquage
     // elles ne partiraient jamais vers le serveur, et la déconnexion les perdrait.
     for (const a of annonces) {
@@ -2348,6 +2520,7 @@
       description: source.description, mesures: source.mesures,
       notes: (source.notes ? source.notes + "\n" : "") + "Reprise de « " + (source.titre || "Sans titre") + " ».",
       prix: source.prix, achat: source.achat,
+      dateVente: "", dateAchat: source.dateAchat || "", provenance: source.provenance || "",
       marque: source.marque, taille: source.taille, etat: source.etat,
       vignette: await faireVignette(photos[0].blob),
       photos, dirty: true,
@@ -2363,6 +2536,247 @@
     openAnnonce(rec.id);
     planifierSync(200);
   });
+
+  /* ================================================================
+     Compta — registres de pilotage, sans rien de fiscal
+     ================================================================ */
+
+  let frais = [];
+  const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+
+  const nombre = (n) => (Number(n) || 0).toFixed(2).replace(".", ",");
+  const eurosCourts = (n) => nombre(n) + " €";
+  const anneeDe = (d) => (d && d.length >= 4 ? d.slice(0, 4) : "");
+  const moisDe = (d) => (d && d.length >= 7 ? +d.slice(5, 7) - 1 : -1);
+
+  const vendues = (an) => vivantes().filter((a) => a.statut === "vendue" && a.dateVente && anneeDe(a.dateVente) === an);
+  const achetees = (an) => vivantes().filter((a) => a.dateAchat && anneeDe(a.dateAchat) === an && a.achat != null);
+  const fraisAn = (an) => frais.filter((f) => !f.deletedAt && anneeDe(f.date) === an);
+
+  function anneesConnues() {
+    const set = new Set();
+    vivantes().forEach((a) => { if (a.dateVente) set.add(anneeDe(a.dateVente)); if (a.dateAchat) set.add(anneeDe(a.dateAchat)); });
+    frais.filter((f) => !f.deletedAt).forEach((f) => set.add(anneeDe(f.date)));
+    set.add(String(new Date().getFullYear()));
+    return [...set].filter(Boolean).sort().reverse();
+  }
+
+  function anneeChoisie() {
+    const sel = $("#comptaAnnee");
+    return sel.value || String(new Date().getFullYear());
+  }
+
+  function tableau(hote, colonnes, lignes, pied) {
+    hote.innerHTML = "";
+    if (!lignes.length) {
+      hote.innerHTML = '<tbody><tr><td class="vide">Rien à afficher pour cette année.</td></tr></tbody>';
+      return;
+    }
+    const thead = document.createElement("thead");
+    const tr = document.createElement("tr");
+    colonnes.forEach((c) => {
+      const th = document.createElement("th");
+      th.textContent = c.titre;
+      if (c.num) th.className = "num";
+      tr.append(th);
+    });
+    thead.append(tr);
+    const tbody = document.createElement("tbody");
+    for (const l of lignes) {
+      const ligne = document.createElement("tr");
+      colonnes.forEach((c) => {
+        const td = document.createElement("td");
+        if (c.num) td.className = "num";
+        const v = c.valeur(l);
+        if (v instanceof Node) td.append(v); else td.textContent = v;
+        ligne.append(td);
+      });
+      tbody.append(ligne);
+    }
+    hote.append(thead, tbody);
+    if (pied) {
+      const tfoot = document.createElement("tfoot");
+      const tr2 = document.createElement("tr");
+      pied.forEach((v, i) => {
+        const td = document.createElement("td");
+        if (colonnes[i] && colonnes[i].num) td.className = "num";
+        td.textContent = v;
+        tr2.append(td);
+      });
+      tfoot.append(tr2);
+      hote.append(tfoot);
+    }
+  }
+
+  function dessinerCompta() {
+    const an = anneeChoisie();
+    const v = vendues(an), ac = achetees(an), fr = fraisAn(an);
+
+    const encaisse = v.reduce((t, a) => t + (Number(a.prix) || 0), 0);
+    const depense = ac.reduce((t, a) => t + (Number(a.achat) || 0), 0);
+    const autres = fr.reduce((t, f) => t + (Number(f.montant) || 0), 0);
+    // Marge sur les pièces vendues : leur prix de vente moins leur propre prix d'achat.
+    const margeVentes = v.reduce((t, a) => t + (Number(a.prix) || 0) - (Number(a.achat) || 0), 0);
+    const marge = margeVentes - autres;
+    const stock = vivantes().filter((a) => a.statut !== "vendue" && a.achat != null);
+    const valeurStock = stock.reduce((t, a) => t + (Number(a.achat) || 0), 0);
+
+    const tuiles = [
+      { quoi: "Encaissé", combien: eurosCourts(encaisse), detail: v.length + " vente" + (v.length > 1 ? "s" : "") },
+      { quoi: "Achats", combien: eurosCourts(depense), detail: ac.length + " pièce" + (ac.length > 1 ? "s" : "") + (autres ? " · " + eurosCourts(autres) + " de frais" : "") },
+      { quoi: "Marge", combien: eurosCourts(marge), detail: encaisse ? Math.round((marge / encaisse) * 100) + " % du chiffre" : "—", ton: marge >= 0 ? "bien" : "mal" },
+      { quoi: "En stock", combien: eurosCourts(valeurStock), detail: stock.length + " pièce" + (stock.length > 1 ? "s" : "") + " non vendue" + (stock.length > 1 ? "s" : "") },
+    ];
+    const hote = $("#comptaTuiles");
+    hote.innerHTML = "";
+    for (const t of tuiles) {
+      const el = document.createElement("div");
+      el.className = "tuile";
+      el.innerHTML = `<div class="quoi"></div><div class="combien ${t.ton || ""}"></div><div class="detail"></div>`;
+      el.querySelector(".quoi").textContent = t.quoi;
+      el.querySelector(".combien").textContent = t.combien;
+      el.querySelector(".detail").textContent = t.detail;
+      hote.append(el);
+    }
+
+    // Par mois
+    const parMois = MOIS.map((nom, i) => {
+      const vm = v.filter((a) => moisDe(a.dateVente) === i);
+      const am = ac.filter((a) => moisDe(a.dateAchat) === i);
+      const fm = fr.filter((f) => moisDe(f.date) === i);
+      const enc = vm.reduce((t, a) => t + (Number(a.prix) || 0), 0);
+      const dep = am.reduce((t, a) => t + (Number(a.achat) || 0), 0);
+      const fri = fm.reduce((t, f) => t + (Number(f.montant) || 0), 0);
+      const mar = vm.reduce((t, a) => t + (Number(a.prix) || 0) - (Number(a.achat) || 0), 0) - fri;
+      return { nom, n: vm.length, enc, dep, fri, mar };
+    }).filter((m) => m.n || m.dep || m.fri);
+
+    tableau($("#comptaMois"),
+      [
+        { titre: "Mois", valeur: (m) => m.nom },
+        { titre: "Ventes", num: true, valeur: (m) => String(m.n) },
+        { titre: "Encaissé", num: true, valeur: (m) => eurosCourts(m.enc) },
+        { titre: "Achats", num: true, valeur: (m) => eurosCourts(m.dep) },
+        { titre: "Frais", num: true, valeur: (m) => eurosCourts(m.fri) },
+        { titre: "Marge", num: true, valeur: (m) => eurosCourts(m.mar) },
+      ], parMois,
+      ["Total", String(v.length), eurosCourts(encaisse), eurosCourts(depense), eurosCourts(autres), eurosCourts(marge)]);
+
+    // Registre des ventes
+    tableau($("#comptaVentes"),
+      [
+        { titre: "Date", valeur: (a) => a.dateVente },
+        { titre: "Pièce", valeur: (a) => a.titre || "Sans titre" },
+        { titre: "Prix de vente", num: true, valeur: (a) => eurosCourts(a.prix) },
+        { titre: "Coût d'achat", num: true, valeur: (a) => (a.achat == null ? "—" : eurosCourts(a.achat)) },
+        { titre: "Marge", num: true, valeur: (a) => eurosCourts((Number(a.prix) || 0) - (Number(a.achat) || 0)) },
+      ],
+      v.slice().sort((a, b) => a.dateVente.localeCompare(b.dateVente)),
+      ["Total", "", eurosCourts(encaisse), "", eurosCourts(margeVentes)]);
+
+    // Registre des achats
+    tableau($("#comptaAchats"),
+      [
+        { titre: "Date", valeur: (a) => a.dateAchat },
+        { titre: "Pièce", valeur: (a) => a.titre || "Sans titre" },
+        { titre: "Provenance", valeur: (a) => a.provenance || "—" },
+        { titre: "Montant", num: true, valeur: (a) => eurosCourts(a.achat) },
+        { titre: "Statut", valeur: (a) => STATUTS[a.statut] || a.statut },
+      ],
+      ac.slice().sort((a, b) => a.dateAchat.localeCompare(b.dateAchat)),
+      ["Total", "", "", eurosCourts(depense), ""]);
+
+    // Autres frais
+    tableau($("#comptaFrais"),
+      [
+        { titre: "Date", valeur: (f) => f.date },
+        { titre: "Libellé", valeur: (f) => f.libelle || "—" },
+        { titre: "Catégorie", valeur: (f) => f.categorie },
+        { titre: "Montant", num: true, valeur: (f) => eurosCourts(f.montant) },
+        { titre: "", valeur: (f) => {
+            const b = document.createElement("button");
+            b.type = "button"; b.className = "sup"; b.textContent = "✕";
+            b.title = "Supprimer ce frais";
+            b.addEventListener("click", () => supprimerFrais(f.id));
+            return b;
+          } },
+      ],
+      fr.slice().sort((a, b) => a.date.localeCompare(b.date)),
+      ["Total", "", "", eurosCourts(autres), ""]);
+  }
+
+  function majAnnees() {
+    const sel = $("#comptaAnnee");
+    const courant = sel.value;
+    const annees = anneesConnues();
+    sel.innerHTML = "";
+    for (const a of annees) {
+      const o = document.createElement("option");
+      o.value = a; o.textContent = a;
+      sel.append(o);
+    }
+    sel.value = annees.includes(courant) ? courant : annees[0];
+  }
+
+  /* ---- Frais ---- */
+
+  async function ajouterFrais() {
+    const date = $("#fraisDate").value || new Date().toISOString().slice(0, 10);
+    const montant = parseFloat($("#fraisMontant").value);
+    if (isNaN(montant) || montant <= 0) { $("#fraisMontant").focus(); return; }
+    const now = Date.now();
+    const f = {
+      id: uuid(), createdAt: now, updatedAt: now, deletedAt: null,
+      date, libelle: $("#fraisLibelle").value.trim(),
+      montant, categorie: $("#fraisCategorie").value, dirty: true,
+    };
+    frais.push(f);
+    await dbPut(f, IDB_FRAIS);
+    $("#fraisLibelle").value = ""; $("#fraisMontant").value = "";
+    majAnnees(); dessinerCompta();
+    planifierSync(300);
+  }
+
+  async function supprimerFrais(id) {
+    const f = frais.find((x) => x.id === id);
+    if (!f) return;
+    f.deletedAt = Date.now(); f.updatedAt = f.deletedAt; f.dirty = true;
+    await dbPut(f, IDB_FRAIS);
+    dessinerCompta();
+    planifierSync(300);
+  }
+
+  /* ---- Export CSV ---- */
+
+  function csv(lignes) {
+    const echappe = (v) => {
+      const t = String(v == null ? "" : v);
+      return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
+    // Point-virgule et BOM : c'est ce qu'attend un tableur configuré en français.
+    return "\uFEFF" + lignes.map((l) => l.map(echappe).join(";")).join("\r\n");
+  }
+
+  function exporterCsv() {
+    const an = anneeChoisie();
+    const lignes = [["Type", "Date", "Libellé", "Provenance", "Montant", "Coût d'achat", "Marge"]];
+    for (const a of vendues(an).sort((x, y) => x.dateVente.localeCompare(y.dateVente))) {
+      lignes.push(["Vente", a.dateVente, a.titre || "Sans titre", "", nombre(a.prix),
+        a.achat == null ? "" : nombre(a.achat), nombre((Number(a.prix) || 0) - (Number(a.achat) || 0))]);
+    }
+    for (const a of achetees(an).sort((x, y) => x.dateAchat.localeCompare(y.dateAchat))) {
+      lignes.push(["Achat", a.dateAchat, a.titre || "Sans titre", a.provenance || "", "-" + nombre(a.achat), "", ""]);
+    }
+    for (const f of fraisAn(an).sort((x, y) => x.date.localeCompare(y.date))) {
+      lignes.push(["Frais", f.date, f.libelle || f.categorie, f.categorie, "-" + nombre(f.montant), "", ""]);
+    }
+    saveBlob(new Blob([csv(lignes)], { type: "text/csv;charset=utf-8" }), `compta-${an}.csv`);
+  }
+
+  $("#comptaAnnee").addEventListener("change", dessinerCompta);
+  $("#comptaCsv").addEventListener("click", exporterCsv);
+  $("#fraisAjouter").addEventListener("click", ajouterFrais);
+  $("#fraisMontant").addEventListener("keydown", (e) => { if (e.key === "Enter") ajouterFrais(); });
 
   /* ================================================================
      Écran de connexion
@@ -2462,7 +2876,8 @@
     catch (e) { /* la session locale part de toute façon */ }
     // Le carnet local est vidé : les annonces restent en ligne, rattachées au compte.
     for (const a of annonces) { try { await dbDel(a.id); } catch (e) { /* ignore */ } }
-    annonces = [];
+    for (const f of frais) { try { await dbDel(f.id, IDB_FRAIS); } catch (e) { /* ignore */ } }
+    annonces = []; frais = [];
     openId = null;
     poserSession(null);
     renderList();

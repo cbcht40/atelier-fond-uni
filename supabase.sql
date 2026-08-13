@@ -67,3 +67,41 @@ create policy "remplacer ses photos" on storage.objects
   for update using (bucket_id = 'photos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "effacer ses photos" on storage.objects
   for delete using (bucket_id = 'photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ───────────────────────────────────────────────────────────────
+-- 4. Compta : dates et provenance sur les annonces, table des frais
+--    (ajouté après coup ; tout est en schéma public, un seul bloc suffit)
+-- ───────────────────────────────────────────────────────────────
+alter table public.annonces add column if not exists date_vente date;
+alter table public.annonces add column if not exists date_achat date;
+alter table public.annonces add column if not exists provenance text not null default '';
+
+create table if not exists public.frais (
+  id         uuid primary key,
+  user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz,
+  date       date not null,
+  libelle    text not null default '',
+  montant    numeric not null default 0,
+  categorie  text not null default 'autre'
+);
+
+create index if not exists frais_user_maj on public.frais (user_id, updated_at desc);
+
+alter table public.frais enable row level security;
+
+drop policy if exists "lire ses frais"      on public.frais;
+drop policy if exists "créer ses frais"     on public.frais;
+drop policy if exists "modifier ses frais"  on public.frais;
+drop policy if exists "supprimer ses frais" on public.frais;
+
+create policy "lire ses frais" on public.frais
+  for select using (auth.uid() = user_id);
+create policy "créer ses frais" on public.frais
+  for insert with check (auth.uid() = user_id);
+create policy "modifier ses frais" on public.frais
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "supprimer ses frais" on public.frais
+  for delete using (auth.uid() = user_id);
