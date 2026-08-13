@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atelier — fond uni pour tes photos</title>
+<meta name="description" content="Remplace l'arrière-plan de tes photos de vêtements par une couleur unie. Tout se passe sur ton appareil, aucune photo n'est envoyée.">
+<meta name="theme-color" content="#f6f4ef">
+<style>
+  /* ---- Palette : neutres papier chaud, accent indigo denim ---- */
+  :root {
+    --paper:     #f6f4ef;
+    --surface:   #ffffff;
+    --surface-2: #faf8f4;
+    --line:      #e3ded4;
+    --line-firm: #cec7b9;
+    --ink:       #1b1917;
+    --muted:     #6b645c;   /* 5,3:1 sur le fond papier — le gris plus clair passait sous 4,5:1 */
+    --accent:    #2f4470;
+    --accent-ink:#ffffff;
+    --accent-soft: rgba(47, 68, 112, .10);
+    --warn:      #8d5f0d;
+    --warn-ink:  #ffffff;
+    --checker:   #e8e4dc;
+
+    --r-sm: 6px;
+    --r-md: 10px;
+    --shadow: 0 1px 1px rgba(27,25,23,.04), 0 6px 20px rgba(27,25,23,.06);
+
+    --serif: Optima, "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #14151a;
+      --surface:   #1c1e25;
+      --surface-2: #22252d;
+      --line:      #32363f;
+      --line-firm: #454a55;
+      --ink:       #e9e7e2;
+      --muted:     #9b968d;
+      --accent:    #9db2e2;
+      --accent-ink:#111621;
+      --accent-soft: rgba(157, 178, 226, .14);
+      --warn:      #d9a44e;
+      --warn-ink:  #1e1607;
+      --checker:   #2a2d35;
+      --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #14151a;
+    --surface:   #1c1e25;
+    --surface-2: #22252d;
+    --line:      #32363f;
+    --line-firm: #454a55;
+    --ink:       #e9e7e2;
+    --muted:     #9b968d;
+    --accent:    #9db2e2;
+    --accent-ink:#111621;
+    --accent-soft: rgba(157, 178, 226, .14);
+    --warn:      #d9a44e;
+    --warn-ink:  #1e1607;
+    --checker:   #2a2d35;
+    --shadow: 0 1px 1px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.55 var(--ui);
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  button, input, select { font: inherit; color: inherit; touch-action: manipulation; }
+
+  .app { max-width: 1180px; margin: 0 auto; padding: 26px 18px 40px; }
+
+  /* ---- En-tête ---- */
+  .masthead h1 {
+    font-family: var(--serif);
+    font-size: clamp(27px, 6vw, 36px);
+    font-weight: 400;
+    letter-spacing: .01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .masthead h1 em { font-style: italic; color: var(--accent); }
+  .masthead .tagline { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+  .masthead .assurance {
+    margin: 12px 0 0; font-size: 12.5px; color: var(--accent);
+    display: flex; align-items: baseline; gap: 7px;
+  }
+  .masthead .assurance::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor; flex: none;
+  }
+  /* Filet gradué — clin d'œil au mètre de couturier */
+  .rule {
+    height: 11px; margin: 18px 0 22px;
+    border-bottom: 1px solid var(--line);
+    background-image:
+      repeating-linear-gradient(90deg, var(--line-firm) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px);
+    background-size: 100% 11px, 100% 5px;
+    background-position: bottom left, bottom left;
+    background-repeat: repeat-x;
+  }
+
+  /* ---- Établi : rail de réglages + plan de travail ---- */
+  .bench { display: grid; gap: 22px; align-items: start; }
+  .rail { display: grid; gap: 14px; }
+  @media (min-width: 920px) {
+    .bench { grid-template-columns: 322px minmax(0, 1fr); gap: 28px; }
+    .rail { position: sticky; top: 20px; }
+  }
+  /* Sur téléphone, les photos passent devant les réglages : le trajet courant
+     est « je choisis mes photos, je regarde, je télécharge ». */
+  @media (max-width: 919px) {
+    .bench { display: flex; flex-direction: column; }
+    .rail { display: contents; }
+    #drop { order: 1; }
+    .stage { order: 2; }
+    #settings { order: 3; }
+  }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); box-shadow: var(--shadow);
+  }
+  .panel > .body { padding: 15px 16px 17px; display: grid; gap: 17px; }
+
+  /* ---- Dépôt ---- */
+  #drop {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    background: var(--surface-2); border: 1.5px dashed var(--line-firm);
+    border-radius: var(--r-md); padding: 17px 16px; color: inherit;
+    transition: border-color .15s, background .15s;
+  }
+  #drop:hover, #drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  #drop b { display: block; font-size: 15.5px; font-weight: 600; }
+  #drop span { display: block; margin-top: 3px; color: var(--muted); font-size: 12.5px; }
+
+  /* ---- Champs ---- */
+  .field { display: grid; gap: 9px; }
+  .lbl {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .lbl .val {
+    font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none;
+    font-size: 13px; font-weight: 600; color: var(--ink);
+  }
+  .hint { color: var(--muted); font-size: 12.5px; }
+
+  .swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+  .sw {
+    width: 40px; height: 40px; padding: 0; cursor: pointer;
+    border: 1px solid var(--line-firm); border-radius: var(--r-sm);
+    position: relative;
+  }
+  .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent); }
+  .sw.alpha {
+    background-color: #fff;
+    background-image:
+      linear-gradient(45deg, #c8c4bc 25%, transparent 25%), linear-gradient(-45deg, #c8c4bc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #c8c4bc 75%), linear-gradient(-45deg, transparent 75%, #c8c4bc 75%);
+    background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  }
+  .sw.custom {
+    overflow: hidden; padding: 0;
+    background:
+      conic-gradient(from .25turn, #d94f3d, #d9a13d, #6faa4e, #3d8fd9, #7a5bd9, #d94f3d);
+  }
+  .sw.custom input {
+    opacity: .001;
+    position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px);
+    padding: 0; border: 0; background: none; cursor: pointer;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 26px; background: none; margin: 0;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 2px; background: var(--line-firm);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px; margin-top: -10px;
+    border-radius: 50%; background: var(--accent); border: 3px solid var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer;
+  }
+  input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line-firm); }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--accent);
+    border: 3px solid var(--surface); cursor: pointer;
+  }
+
+  select {
+    width: 100%; padding: 10px 11px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-firm); background: var(--surface-2);
+  }
+  .checks { display: grid; gap: 11px; }
+  .checks label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 14.5px; }
+  .checks input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); flex: none; }
+  .checks .sub { display: block; color: var(--muted); font-size: 12.5px; }
+
+  /* ---- Boutons ---- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 44px; padding: 0 16px; cursor: pointer;
+    border: 1px solid var(--line-firm); border-radius: var(--r-sm);
+    background: var(--surface); font-size: 14.5px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.wide { width: 100%; }
+  .btn:disabled { opacity: .45; cursor: default; filter: none; }
+  .btn-row { display: flex; gap: 9px; }
+  .btn-row .btn { flex: 1; }
+
+  /* ---- Plan de travail ---- */
+  .stage { display: grid; gap: 18px; min-width: 0; }
+  #status {
+    font-size: 12.5px; color: var(--muted); min-height: 18px;
+    font-variant-numeric: tabular-nums;
+  }
+  #grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 500px) { #grid { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); } }
+
+  .item {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); box-shadow: var(--shadow); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .shot {
+    position: relative; min-height: 130px; display: flex; align-items: center; justify-content: center;
+    background-color: var(--surface-2);
+    background-image:
+      linear-gradient(45deg, var(--checker) 25%, transparent 25%), linear-gradient(-45deg, var(--checker) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--checker) 75%), linear-gradient(-45deg, transparent 75%, var(--checker) 75%);
+    background-size: 18px 18px; background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+  }
+  .shot canvas { display: block; max-width: 100%; height: auto; cursor: crosshair; }
+  .flag {
+    position: absolute; left: 9px; top: 9px; right: 9px;
+    background: var(--warn); color: var(--warn-ink);
+    font-size: 11.5px; font-weight: 600; line-height: 1.3;
+    padding: 5px 8px; border-radius: var(--r-sm);
+  }
+  .seeds {
+    position: absolute; right: 9px; bottom: 9px;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 999px;
+  }
+  .tools { display: flex; align-items: center; gap: 4px; padding: 7px 8px; border-top: 1px solid var(--line); }
+  .name {
+    flex: 1; min-width: 0; font-size: 12px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 4px;
+  }
+  .tools .btn { min-height: 38px; padding: 0 10px; font-size: 13px; border-color: transparent; background: none; }
+  .tools .btn:hover { background: var(--surface-2); border-color: var(--line); }
+
+  /* ---- Notes ---- */
+  .notes {
+    border-top: 1px solid var(--line);
+    margin: 32px 0 0; padding-top: 18px; max-width: 66ch;
+  }
+  .notes h2 {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .notes ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 13.5px; color: var(--muted); }
+  .notes li strong { color: var(--ink); font-weight: 600; }
+  .notes .disclaimer { margin: 16px 0 0; font-size: 12px; color: var(--muted); }
+
+  /* ---- Barre collante mobile ---- */
+  .dock {
+    position: sticky; bottom: 0; z-index: 5; display: none;
+    margin: 18px -18px -40px; padding: 10px 18px max(10px, env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    border-top: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+  }
+  .dock.on { display: block; }
+  @media (min-width: 920px) { .dock, .dock.on { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="masthead">
+    <h1><em>Atelier</em> — fond uni</h1>
+    <p class="tagline">Des photos de vêtements sur fond propre, prêtes pour tes annonces.</p>
+    <p class="assurance">Tout est calculé sur ton appareil : aucune photo n'est envoyée</p>
+  </header>
+  <div class="rule" role="presentation"></div>
+
+  <div class="bench">
+
+    <div class="rail">
+      <button type="button" id="drop">
+        <b>Choisir des photos</b>
+        <span>Appareil photo, galerie, ou glisser-déposer</span>
+      </button>
+      <input id="file" type="file" accept="image/*" multiple hidden>
+
+      <section class="panel" id="settings" hidden>
+        <div class="body">
+
+          <div class="field">
+            <div class="lbl" id="lblColor">Couleur de fond</div>
+            <div class="swatches" role="group" aria-labelledby="lblColor" id="swatches">
+              <button type="button" class="sw" data-color="#ffffff" style="background:#ffffff" aria-label="Blanc" aria-pressed="false"></button>
+              <button type="button" class="sw" data-color="#f1efec" style="background:#f1efec" aria-label="Gris très clair" aria-pressed="false"></button>
+              <button type="button" class="sw" data-color="#dcd8d2" style="background:#dcd8d2" aria-label="Gris clair" aria-pressed="false"></button>
+              <button type="button" class="sw" data-color="#eee5d8" style="background:#eee5d8" aria-label="Beige clair" aria-pressed="false"></button>
+              <button type="button" class="sw" data-color="#1d1d1c" style="background:#1d1d1c" aria-label="Noir" aria-pressed="false"></button>
+              <span class="sw custom" id="customWrap" title="Couleur personnalisée">
+                <input type="color" id="custom" value="#c4cfd8" aria-label="Couleur personnalisée">
+              </span>
+              <button type="button" class="sw alpha" data-color="transparent" aria-label="Fond transparent (PNG)" aria-pressed="false"></button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="tol">Sensibilité <span class="val" id="tolVal">28</span></label>
+            <input type="range" id="tol" min="4" max="80" value="28">
+            <p class="hint">Plus haut, l'outil enlève davantage — et finit par mordre sur le vêtement.</p>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="feather">Bords <span class="val" id="featherVal">2</span></label>
+            <input type="range" id="feather" min="0" max="5" value="2">
+            <p class="hint">Adoucit le contour découpé.</p>
+          </div>
+
+          <div class="field">
+            <div class="lbl">Options</div>
+            <div class="checks">
+              <label><input type="checkbox" id="square"> <span>Format carré <span class="sub">Comble avec la couleur de fond</span></span></label>
+              <label><input type="checkbox" id="shadow"> <span>Garder les ombres <span class="sub">Préserve les plis clairs sur fond clair</span></span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="maxSide">Taille à l'export</label>
+            <select id="maxSide">
+              <option value="1200">1200 px</option>
+              <option value="1600" selected>1600 px — recommandé</option>
+              <option value="2000">2000 px</option>
+              <option value="0">Taille d'origine</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <button type="button" class="btn primary wide" id="dlAll">Télécharger les photos</button>
+            <div class="btn-row">
+              <button type="button" class="btn" id="addMore">Ajouter</button>
+              <button type="button" class="btn" id="clearAll">Tout retirer</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+    <main class="stage">
+      <p id="status" role="status" aria-live="polite"></p>
+      <div id="grid"></div>
+    </main>
+
+  </div>
+
+  <section class="notes">
+    <h2>Pour un bon résultat</h2>
+    <ul>
+      <li>Pose le vêtement à plat sur un fond <strong>uni et bien contrasté</strong> : drap, sol, mur. Le fond doit avoir une couleur franchement différente du vêtement.</li>
+      <li>Lumière régulière, sans ombre dure — près d'une fenêtre en journée, c'est l'idéal.</li>
+      <li>Une zone de fond a été oubliée ? <strong>Touche-la dans l'aperçu</strong> pour l'ajouter à la découpe.</li>
+      <li>Le vêtement se fait grignoter ? Baisse la sensibilité, puis retouche les zones restantes au doigt.</li>
+      <li>Fond chargé — parquet à motifs, tapis, autres vêtements derrière : refais la photo, l'outil n'y arrivera pas.</li>
+    </ul>
+    <p class="disclaimer">Outil personnel de préparation de photos. Aucun lien avec Vinted, et aucune connexion à ton compte.</p>
+  </section>
+
+  <div class="dock" id="dock">
+    <button type="button" class="btn primary wide" id="dlAllMobile">Télécharger les photos</button>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const PREVIEW_MAX = 640;    // résolution de calcul de l'aperçu
+  const SOURCE_MAX  = 2400;   // on rétrécit la source à l'import : mémoire des téléphones
+  const HARD_MAX    = 4000;
+
+  const opts = {
+    color: "#ffffff",
+    transparent: false,
+    tol: 28,
+    feather: 2,
+    maxSide: 1600,
+    square: false,
+    keepShadows: false,
+  };
+
+  const items = [];
+  const $ = (s) => document.querySelector(s);
+  const grid = $("#grid"), settings = $("#settings"), dock = $("#dock"), statusEl = $("#status");
+
+  /* ================================================================
+     Traitement d'image — croissance de région depuis les bords
+     ================================================================ */
+
+  // Distance couleur pondérée, au carré (0 .. 585225, soit 0..765 après racine).
+  function dist2(r1, g1, b1, r2, g2, b2) {
+    const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+    return 2 * dr * dr + 4 * dg * dg + 3 * db * db;
+  }
+
+  // Couleurs de référence du fond : pourtour de l'image + points touchés par l'utilisateur.
+  function referenceColors(data, w, h, thr, seeds) {
+    const samples = [];
+    const band = Math.max(2, Math.round(Math.min(w, h) * 0.012));
+    const step = Math.max(1, Math.round((2 * (w + h)) / 900));
+    for (let y = 0; y < h; y++) {
+      const edgeRow = y < band || y >= h - band;
+      for (let x = 0; x < w; x += step) {
+        if (!edgeRow && x >= band && x < w - band) { x = w - band - step; continue; }
+        const i = (y * w + x) * 4;
+        samples.push([data[i], data[i + 1], data[i + 2]]);
+      }
+      if (!edgeRow) y += Math.max(0, step - 1);
+    }
+
+    const clusterThr2 = (thr * 0.85) * (thr * 0.85);
+    const clusters = [];
+    for (const s of samples) {
+      let best = -1, bestD = Infinity;
+      for (let c = 0; c < clusters.length; c++) {
+        const k = clusters[c];
+        const d = dist2(s[0], s[1], s[2], k.r / k.n, k.g / k.n, k.b / k.n);
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      if (best >= 0 && bestD <= clusterThr2) {
+        const k = clusters[best];
+        k.r += s[0]; k.g += s[1]; k.b += s[2]; k.n++;
+      } else if (clusters.length < 8) {
+        clusters.push({ r: s[0], g: s[1], b: s[2], n: 1 });
+      }
+    }
+
+    const minCount = Math.max(3, samples.length * 0.03);
+    const refs = [];
+    for (const k of clusters) {
+      if (k.n >= minCount) refs.push(k.r / k.n, k.g / k.n, k.b / k.n);
+    }
+    if (!refs.length && clusters.length) {
+      const k = clusters.reduce((a, b) => (b.n > a.n ? b : a));
+      refs.push(k.r / k.n, k.g / k.n, k.b / k.n);
+    }
+
+    for (const s of seeds) {
+      const x = Math.min(w - 1, Math.max(0, Math.round(s.x * w)));
+      const y = Math.min(h - 1, Math.max(0, Math.round(s.y * h)));
+      const i = (y * w + x) * 4;
+      refs.push(data[i], data[i + 1], data[i + 2]);
+    }
+    return new Float32Array(refs);
+  }
+
+  function boxBlur(src, w, h, r) {
+    if (r <= 0) return src;
+    const d = 2 * r + 1;
+    const tmp = new Float32Array(w * h);
+    const out = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const row = y * w;
+      let sum = 0;
+      for (let x = -r; x <= r; x++) sum += src[row + Math.min(w - 1, Math.max(0, x))];
+      for (let x = 0; x < w; x++) {
+        tmp[row + x] = sum / d;
+        sum -= src[row + Math.min(w - 1, Math.max(0, x - r))];
+        sum += src[row + Math.min(w - 1, Math.max(0, x + r + 1))];
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      let sum = 0;
+      for (let y = -r; y <= r; y++) sum += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+      for (let y = 0; y < h; y++) {
+        out[y * w + x] = sum / d;
+        sum -= tmp[Math.min(h - 1, Math.max(0, y - r)) * w + x];
+        sum += tmp[Math.min(h - 1, Math.max(0, y + r + 1)) * w + x];
+      }
+    }
+    return out;
+  }
+
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  /** Renvoie { canvas, coverage } — coverage = part de l'image classée comme fond. */
+  function render(item, maxSide) {
+    const limit = maxSide > 0 ? maxSide : HARD_MAX;
+    const scale = Math.min(1, limit / Math.max(item.w, item.h));
+    const w = Math.max(1, Math.round(item.w * scale));
+    const h = Math.max(1, Math.round(item.h * scale));
+
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(item.bmp, 0, 0, w, h);
+
+    if (item.showOriginal) return { canvas: cv, coverage: -1 };
+
+    const img = ctx.getImageData(0, 0, w, h);
+    const data = img.data;
+    const N = w * h;
+
+    const thr = opts.tol * 3;
+    const thr2 = thr * thr;
+    const localThr2 = (thr * 0.35) * (thr * 0.35);  // tolérance de proche en proche (dégradés d'ombre)
+    const capThr2 = (thr * 1.8) * (thr * 1.8);      // plafond absolu malgré la propagation locale
+    const refs = referenceColors(data, w, h, thr, item.seeds);
+    const nRefs = refs.length / 3;
+
+    const mask = new Uint8Array(N);   // 255 = fond
+    const stack = new Int32Array(N);
+    let sp = 0;
+
+    const minRefD2 = (r, g, b) => {
+      let m = Infinity;
+      for (let k = 0; k < nRefs; k++) {
+        const d = dist2(r, g, b, refs[k * 3], refs[k * 3 + 1], refs[k * 3 + 2]);
+        if (d < m) m = d;
+      }
+      return m;
+    };
+    const push = (idx) => { mask[idx] = 255; stack[sp++] = idx; };
+
+    // Amorces : pixels du pourtour qui ressemblent au fond.
+    for (let x = 0; x < w; x++) {
+      for (let e = 0; e < 2; e++) {
+        const y = e === 0 ? 0 : h - 1;
+        const idx = y * w + x, i = idx * 4;
+        if (!mask[idx] && minRefD2(data[i], data[i + 1], data[i + 2]) <= thr2) push(idx);
+      }
+    }
+    for (let y = 0; y < h; y++) {
+      for (let e = 0; e < 2; e++) {
+        const x = e === 0 ? 0 : w - 1;
+        const idx = y * w + x, i = idx * 4;
+        if (!mask[idx] && minRefD2(data[i], data[i + 1], data[i + 2]) <= thr2) push(idx);
+      }
+    }
+    // Amorces manuelles : toujours acceptées.
+    for (const s of item.seeds) {
+      const x = Math.min(w - 1, Math.max(0, Math.round(s.x * w)));
+      const y = Math.min(h - 1, Math.max(0, Math.round(s.y * h)));
+      const idx = y * w + x;
+      if (!mask[idx]) push(idx);
+    }
+
+    const grow = opts.keepShadows ? 0 : 1;
+
+    while (sp > 0) {
+      const idx = stack[--sp];
+      const i0 = idx * 4;
+      const pr = data[i0], pg = data[i0 + 1], pb = data[i0 + 2];
+      const x = idx % w, y = (idx - x) / w;
+
+      for (let n = 0; n < 4; n++) {
+        let nx = x, ny = y;
+        if (n === 0) { if (x === 0) continue; nx--; }
+        else if (n === 1) { if (x === w - 1) continue; nx++; }
+        else if (n === 2) { if (y === 0) continue; ny--; }
+        else { if (y === h - 1) continue; ny++; }
+
+        const nidx = ny * w + nx;
+        if (mask[nidx]) continue;
+        const i = nidx * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const dRef = minRefD2(r, g, b);
+        if (dRef <= thr2) { push(nidx); continue; }
+        if (grow && dRef <= capThr2 && dist2(r, g, b, pr, pg, pb) <= localThr2) push(nidx);
+      }
+    }
+
+    let bgCount = 0;
+    for (let i = 0; i < N; i++) if (mask[i]) bgCount++;
+    const coverage = bgCount / N;
+
+    // Érosion d'1 px avant lissage : le flou reste centré sur le vrai contour.
+    let alpha;
+    if (opts.feather > 0) {
+      const er = new Uint8Array(N);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = y * w + x;
+          if (!mask[idx]) continue;
+          const l = x > 0 ? mask[idx - 1] : 255;
+          const r = x < w - 1 ? mask[idx + 1] : 255;
+          const u = y > 0 ? mask[idx - w] : 255;
+          const d = y < h - 1 ? mask[idx + w] : 255;
+          er[idx] = (l && r && u && d) ? 255 : 0;
+        }
+      }
+      alpha = boxBlur(er, w, h, opts.feather);
+    } else {
+      alpha = mask;
+    }
+
+    const bg = hexToRgb(opts.color);
+    for (let idx = 0; idx < N; idx++) {
+      const a = alpha[idx] / 255;
+      if (a <= 0) continue;
+      const i = idx * 4;
+      if (opts.transparent) {
+        data[i + 3] = Math.round(data[i + 3] * (1 - a));
+      } else {
+        data[i]     = data[i] * (1 - a) + bg.r * a;
+        data[i + 1] = data[i + 1] * (1 - a) + bg.g * a;
+        data[i + 2] = data[i + 2] * (1 - a) + bg.b * a;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    if (!opts.square) return { canvas: cv, coverage };
+
+    const side = Math.max(w, h);
+    const sq = document.createElement("canvas");
+    sq.width = side; sq.height = side;
+    const sctx = sq.getContext("2d");
+    if (!opts.transparent) {
+      sctx.fillStyle = opts.color;
+      sctx.fillRect(0, 0, side, side);
+    }
+    sctx.drawImage(cv, (side - w) / 2, (side - h) / 2);
+    return { canvas: sq, coverage };
+  }
+
+  /* ================================================================
+     File d'attente des aperçus
+     ================================================================ */
+
+  let queue = [], running = false;
+
+  function scheduleAll() { queue = items.slice(); pump(); }
+  function scheduleOne(item) { if (!queue.includes(item)) queue.push(item); pump(); }
+
+  function pump() {
+    if (running) return;
+    const item = queue.shift();
+    if (!item) { setStatus(""); return; }
+    running = true;
+    setStatus(queue.length ? `Calcul de l'aperçu… ${queue.length + 1} restantes` : "Calcul de l'aperçu…");
+    // Laisse le navigateur repeindre avant de bloquer le fil principal.
+    setTimeout(() => {
+      try {
+        const { canvas, coverage } = render(item, PREVIEW_MAX);
+        item.canvas.width = canvas.width;
+        item.canvas.height = canvas.height;
+        item.canvas.getContext("2d").drawImage(canvas, 0, 0);
+
+        let msg = "";
+        if (coverage >= 0) {
+          if (coverage > 0.93) msg = "Fond mal détecté — baisse la sensibilité";
+          else if (coverage < 0.04) msg = "Presque rien détecté — monte la sensibilité, ou touche le fond";
+        }
+        item.flag.textContent = msg;
+        item.flag.hidden = !msg;
+
+        item.seedTag.textContent = item.seeds.length ? `${item.seeds.length} point${item.seeds.length > 1 ? "s" : ""}` : "";
+        item.seedTag.hidden = !item.seeds.length;
+      } catch (e) {
+        console.error(e);
+        item.flag.textContent = "Cette photo n'a pas pu être traitée";
+        item.flag.hidden = false;
+      }
+      running = false;
+      pump();
+    }, 16);
+  }
+
+  function setStatus(t) { statusEl.textContent = t; }
+
+  /* ================================================================
+     Cartes
+     ================================================================ */
+
+  function addCard(item) {
+    const el = document.createElement("figure");
+    el.className = "item";
+    el.style.margin = "0";
+
+    const shot = document.createElement("div");
+    shot.className = "shot";
+    const canvas = document.createElement("canvas");
+    const flag = document.createElement("div");
+    flag.className = "flag"; flag.hidden = true;
+    const seedTag = document.createElement("div");
+    seedTag.className = "seeds"; seedTag.hidden = true;
+    shot.append(canvas, flag, seedTag);
+
+    const tools = document.createElement("figcaption");
+    tools.className = "tools";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = item.name;
+    name.title = item.name;
+
+    const mk = (label, title, fn) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn";
+      b.textContent = label; b.title = title; b.setAttribute("aria-label", title);
+      b.addEventListener("click", fn);
+      return b;
+    };
+
+    const cmp = mk("Original", "Voir la photo d'origine", () => {
+      item.showOriginal = !item.showOriginal;
+      cmp.textContent = item.showOriginal ? "Résultat" : "Original";
+      scheduleOne(item);
+    });
+    const reset = mk("↺", "Effacer les points ajoutés", () => { item.seeds = []; scheduleOne(item); });
+    const dl = mk("↓", "Télécharger cette photo", () => downloadOne(item));
+    const rm = mk("✕", "Retirer cette photo", () => {
+      const i = items.indexOf(item);
+      if (i >= 0) items.splice(i, 1);
+      if (item.bmp.close) item.bmp.close();
+      el.remove();
+      syncChrome();
+    });
+
+    tools.append(name, cmp, reset, dl, rm);
+    el.append(shot, tools);
+    grid.append(el);
+
+    canvas.addEventListener("click", (ev) => {
+      const r = canvas.getBoundingClientRect();
+      item.seeds.push({ x: (ev.clientX - r.left) / r.width, y: (ev.clientY - r.top) / r.height });
+      if (item.showOriginal) { item.showOriginal = false; cmp.textContent = "Original"; }
+      scheduleOne(item);
+    });
+
+    item.canvas = canvas;
+    item.flag = flag;
+    item.seedTag = seedTag;
+  }
+
+  function syncChrome() {
+    const has = items.length > 0;
+    settings.hidden = !has;
+    dock.classList.toggle("on", has);
+  }
+
+  /* ================================================================
+     Import
+     ================================================================ */
+
+  async function addFiles(fileList) {
+    const files = [...fileList].filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    setStatus(`Ouverture de ${files.length} photo${files.length > 1 ? "s" : ""}…`);
+    for (const f of files) {
+      try {
+        const bmp = await loadBitmap(f);
+        const item = {
+          name: f.name, bmp, w: bmp.width, h: bmp.height,
+          seeds: [], showOriginal: false,
+          canvas: null, flag: null, seedTag: null,
+        };
+        items.push(item);
+        addCard(item);
+      } catch (e) {
+        console.error("Impossible d'ouvrir " + f.name, e);
+        setStatus(`« ${f.name} » n'a pas pu être ouverte`);
+      }
+    }
+    syncChrome();
+    scheduleAll();
+  }
+
+  async function loadBitmap(file) {
+    let bmp = null;
+    if (window.createImageBitmap) {
+      try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+      catch (e) { /* on retombe sur <img> */ }
+    }
+    if (!bmp) {
+      bmp = await new Promise((res, rej) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); res(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("decode")); };
+        img.src = url;
+      });
+    }
+    // Rétrécit les très grandes photos : un capteur de téléphone sature vite la mémoire.
+    const big = Math.max(bmp.width, bmp.height);
+    if (big > SOURCE_MAX) {
+      const s = SOURCE_MAX / big;
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * s);
+      c.height = Math.round(bmp.height * s);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      bmp = c;
+    }
+    return bmp;
+  }
+
+  /* ================================================================
+     Export
+     ================================================================ */
+
+  function exportName(item) {
+    const dot = item.name.lastIndexOf(".");
+    const base = dot > 0 ? item.name.slice(0, dot) : item.name;
+    return base + "-fond." + (opts.transparent ? "png" : "jpg");
+  }
+
+  function exportItem(item) {
+    return new Promise((res) => {
+      const wasOriginal = item.showOriginal;
+      item.showOriginal = false;
+      const { canvas } = render(item, opts.maxSide);
+      item.showOriginal = wasOriginal;
+      canvas.toBlob((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = exportName(item);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        setTimeout(res, 300);   // laisse le navigateur enchaîner les téléchargements
+      }, opts.transparent ? "image/png" : "image/jpeg", 0.92);
+    });
+  }
+
+  function downloadOne(item) {
+    setStatus("Export en cours…");
+    setTimeout(async () => { await exportItem(item); setStatus("Photo enregistrée"); }, 16);
+  }
+
+  async function downloadAll() {
+    if (!items.length) return;
+    for (let i = 0; i < items.length; i++) {
+      setStatus(`Export ${i + 1}/${items.length}…`);
+      await new Promise((r) => setTimeout(r, 16));
+      await exportItem(items[i]);
+    }
+    setStatus(`${items.length} photo${items.length > 1 ? "s enregistrées" : " enregistrée"}`);
+  }
+
+  /* ================================================================
+     Réglages mémorisés
+     ================================================================ */
+
+  const STORE = "atelier-fond-uni";
+  function saveOpts() {
+    try { localStorage.setItem(STORE, JSON.stringify(opts)); } catch (e) { /* mode privé */ }
+  }
+  function loadOpts() {
+    try {
+      const raw = localStorage.getItem(STORE);
+      if (raw) Object.assign(opts, JSON.parse(raw));
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ================================================================
+     Branchements
+     ================================================================ */
+
+  const drop = $("#drop"), fileInput = $("#file");
+  drop.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
+  ["dragenter", "dragover"].forEach((t) =>
+    drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((t) =>
+    drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => addFiles(e.dataTransfer.files));
+  window.addEventListener("dragover", (e) => e.preventDefault());
+  window.addEventListener("drop", (e) => e.preventDefault());
+  window.addEventListener("paste", (e) => { if (e.clipboardData && e.clipboardData.files.length) addFiles(e.clipboardData.files); });
+
+  const swatches = [...document.querySelectorAll(".sw[data-color]")];
+  const custom = $("#custom"), customWrap = $("#customWrap");
+
+  function markColor(btn) {
+    swatches.forEach((s) => s.setAttribute("aria-pressed", String(s === btn)));
+    // La pastille « couleur libre » affiche le dégradé tant qu'elle n'est pas choisie,
+    // puis la couleur retenue.
+    customWrap.style.boxShadow = btn ? "" : "0 0 0 2px var(--paper), 0 0 0 4px var(--accent)";
+    customWrap.style.background = btn ? "" : custom.value;
+  }
+  function pickColor(value, btn, rerender = true) {
+    if (value === "transparent") opts.transparent = true;
+    else { opts.transparent = false; opts.color = value; }
+    markColor(btn);
+    saveOpts();
+    if (rerender) scheduleAll();
+  }
+  swatches.forEach((s) => s.addEventListener("click", () => pickColor(s.dataset.color, s)));
+  custom.addEventListener("input", () => pickColor(custom.value, null));
+
+  function bindRange(id, key, valId) {
+    const el = $("#" + id), out = $("#" + valId);
+    el.addEventListener("input", () => {
+      opts[key] = +el.value;
+      out.textContent = el.value;
+      saveOpts();
+      scheduleAll();
+    });
+    return el;
+  }
+  const tolEl = bindRange("tol", "tol", "tolVal");
+  const featherEl = bindRange("feather", "feather", "featherVal");
+
+  const maxSideEl = $("#maxSide"), squareEl = $("#square"), shadowEl = $("#shadow");
+  maxSideEl.addEventListener("change", () => { opts.maxSide = +maxSideEl.value; saveOpts(); });
+  squareEl.addEventListener("change", () => { opts.square = squareEl.checked; saveOpts(); scheduleAll(); });
+  shadowEl.addEventListener("change", () => { opts.keepShadows = shadowEl.checked; saveOpts(); scheduleAll(); });
+
+  $("#dlAll").addEventListener("click", downloadAll);
+  $("#dlAllMobile").addEventListener("click", downloadAll);
+  $("#addMore").addEventListener("click", () => fileInput.click());
+  $("#clearAll").addEventListener("click", () => {
+    items.forEach((it) => { if (it.bmp.close) it.bmp.close(); });
+    items.length = 0;
+    grid.innerHTML = "";
+    queue = [];
+    syncChrome();
+    setStatus("");
+  });
+
+  // État initial : réglages mémorisés reportés dans l'interface.
+  loadOpts();
+  tolEl.value = opts.tol; $("#tolVal").textContent = opts.tol;
+  featherEl.value = opts.feather; $("#featherVal").textContent = opts.feather;
+  maxSideEl.value = String(opts.maxSide);
+  squareEl.checked = opts.square;
+  shadowEl.checked = opts.keepShadows;
+  custom.value = /^#[0-9a-f]{6}$/i.test(opts.color) ? opts.color : "#c4cfd8";
+  const known = swatches.find((s) => s.dataset.color === (opts.transparent ? "transparent" : opts.color));
+  markColor(known || null);
+  syncChrome();
+})();
+</script>
+</body>
+</html>
