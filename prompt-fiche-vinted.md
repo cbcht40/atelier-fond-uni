@@ -65,8 +65,27 @@ Puis attends ma validation : je peux corriger un chiffre avant que tu rédiges l
 4. Mesures, précédées de la mention : « Mesures prises à plat, à 1-2 cm près ».
 5. Conseils d'entretien si l'étiquette les indique ou si la matière l'impose (laine, soie, lin).
 6. Une ligne finale neutre (envoi rapide, questions bienvenues).
+7. **Une dernière ligne de mots-clés**, précédés de `#`, séparés par des espaces.
 
 Ton : factuel, sobre, à la première personne. Pas de superlatifs, pas d'argument inventé sur la provenance ou l'ancienneté.
+
+### La ligne de mots-clés
+
+Vinted n'a pas de système de hashtags : le `#` en lui-même ne fait rien. En revanche la recherche interne lit toute la description, donc cette ligne sert à couvrir les **formulations que l'acheteur tapera** et qui ne sont pas déjà dans le titre.
+
+Donne 8 à 12 mots, tirés de la pièce elle-même :
+- le type et ses synonymes courants, français et anglais (jean/denim, pull/maille/sweater, veste/blouson, basket/sneakers) ;
+- la matière, la couleur, la coupe (oversize, droit, cintré, taille haute) ;
+- le style si la pièce le porte vraiment (vintage, workwear, streetwear, minimaliste) ;
+- la saison ou l'usage quand c'est net (mi-saison, hiver, sport) ;
+- la marque et la taille.
+
+**Interdits absolus**, parce que Vinted masque les annonces qui les emploient :
+- le nom d'une **autre marque** que celle du vêtement — pas de « #zara #hm » sur un vêtement sans marque, pas de « similaire à » ;
+- les mots sans rapport avec la pièce, même populaires ;
+- la répétition du même mot sous plusieurs formes pour gonfler la liste.
+
+Si la marque n'est pas identifiable, n'invente pas de mot-clé de marque : mieux vaut huit mots justes que douze dont deux mensongers.
 
 ## 4. Prix
 

@@ -629,7 +629,11 @@
             <div class="field">
               <label class="lbl" for="fDescription">Description</label>
               <textarea id="fDescription" rows="10" placeholder="Présentation, matière, coupe, état, mesures…"></textarea>
-              <button type="button" class="btn copy" data-copy="fDescription">Copier la description</button>
+              <div class="btn-row">
+                <button type="button" class="btn copy" data-copy="fDescription">Copier la description</button>
+                <button type="button" class="btn" id="motsCles">Ajouter les mots-clés</button>
+              </div>
+              <p class="hint">Ajoute en fin de description une ligne de mots-clés tirés de ta pièce, pour que la recherche Vinted la trouve sur plus de formulations.</p>
             </div>
 
             <div class="field">
@@ -1844,6 +1848,68 @@
       planifierSauvegarde();
     });
   }
+
+  /* ---- Ligne de mots-clés ----------------------------------------
+     Vinted n'a pas de hashtags : c'est la recherche plein texte qui lit la
+     description. On y ajoute donc les mots de la pièce et leurs synonymes
+     courants — jamais d'autres marques, ce que Vinted sanctionne. */
+
+  const SYNONYMES = {
+    jean: ["denim"], denim: ["jean"], jeans: ["jean", "denim"],
+    pull: ["maille", "sweater"], pullover: ["pull"], sweat: ["hoodie", "sweatshirt"],
+    hoodie: ["sweat", "capuche"], gilet: ["cardigan"], cardigan: ["gilet"],
+    veste: ["blouson"], blouson: ["veste"], manteau: ["coat"], parka: ["manteau"],
+    chemise: ["shirt"], tshirt: ["tee"], "t-shirt": ["tee", "tshirt"], polo: ["pique"],
+    robe: ["dress"], jupe: ["skirt"], short: ["bermuda"], pantalon: ["trousers"],
+    chino: ["pantalon"], jogging: ["survetement"], survetement: ["jogging"],
+    basket: ["sneakers"], baskets: ["sneakers"], sneakers: ["baskets"],
+    bottes: ["boots"], boots: ["bottes"], sac: ["bag"], echarpe: ["scarf"],
+    cuir: ["leather"], laine: ["wool"], coton: ["cotton"], lin: ["linen"],
+    velours: ["corduroy"], soie: ["silk"], cachemire: ["cashmere"],
+    oversize: ["large", "loose"], vintage: ["retro"], retro: ["vintage"],
+  };
+  const MOTS_VIDES = new Set(["le","la","les","un","une","des","de","du","des","en","et","a","au","aux","pour","avec","sans","taille","tres","bon","etat","neuf","sous","sur","dans","par","est","son","sa"]);
+
+  const sansAccent = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  /** Lit les champs affichés, pas la fiche enregistrée : l'enregistrement est
+      différé d'une demi-seconde, et un titre tout juste tapé serait ignoré. */
+  function motsClesAffiches() {
+    const titre = champs.titre.value, marque = champs.marque.value, taille = champs.taille.value;
+    const jetons = [];
+    const ajouter = (brut) => {
+      const m = sansAccent(String(brut || "")).toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (m.length < 2 || MOTS_VIDES.has(m) || jetons.includes(m)) return;
+      jetons.push(m);
+    };
+    if (marque) ajouter(marque);
+    const duTitre = sansAccent(titre).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    duTitre.forEach(ajouter);
+    // Synonymes des mots reconnus, pour couvrir d'autres formulations de recherche.
+    [...duTitre, sansAccent(marque).toLowerCase()].forEach((m) => {
+      (SYNONYMES[m] || []).forEach(ajouter);
+    });
+    if (taille) ajouter("taille" + sansAccent(taille).toLowerCase().replace(/[^a-z0-9]/g, ""));
+    return jetons.slice(0, 12);
+  }
+
+  $("#motsCles").addEventListener("click", () => {
+    if (!courante()) return;
+    const mots = motsClesAffiches();
+    const bouton = $("#motsCles");
+    if (!mots.length) {
+      bouton.textContent = "Remplis d'abord le titre";
+      setTimeout(() => { bouton.textContent = "Ajouter les mots-clés"; }, 2200);
+      return;
+    }
+    const ligne = mots.map((m) => "#" + m).join(" ");
+    // Une ligne de mots-clés déjà présente est remplacée, pas empilée.
+    const texte = champs.description.value.replace(/\n*^#[^\n]*$/m, "").replace(/\s+$/, "");
+    champs.description.value = (texte ? texte + "\n\n" : "") + ligne;
+    champs.description.dispatchEvent(new Event("input"));
+    bouton.textContent = `${mots.length} mots ajoutés`;
+    setTimeout(() => { bouton.textContent = "Ajouter les mots-clés"; }, 2200);
+  });
 
   document.querySelectorAll(".btn.copy").forEach((b) => {
     b.addEventListener("click", async () => {
