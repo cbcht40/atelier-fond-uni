@@ -304,6 +304,40 @@
     .tabs { margin-bottom: 14px; }
   }
 
+  /* ---- Écran de connexion ---- */
+  .gate { max-width: 420px; margin: 8px auto 0; }
+  .gate h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 0; }
+  .gate input[type=email], .gate input[type=password] {
+    width: 100%; min-height: 46px; padding: 0 12px;
+    border: 1px solid var(--line-firm); border-radius: var(--r-sm);
+    background: var(--surface-2); color: inherit;
+  }
+  .gate .field { gap: 7px; }
+  .gate-msg {
+    margin: 0; padding: 10px 12px; border-radius: var(--r-sm); font-size: 13.5px;
+    background: var(--danger-soft); color: var(--danger);
+  }
+  .gate-msg.ok { background: var(--good-soft); color: var(--good); }
+  .btn.lien {
+    border: 0; background: none; color: var(--muted); text-decoration: underline;
+    text-underline-offset: 3px; min-height: 38px; font-size: 13.5px;
+  }
+  .btn.lien:hover { color: var(--ink); }
+
+  /* ---- Bandeau de compte ---- */
+  .account {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 0 0 14px; font-size: 12.5px; color: var(--muted);
+  }
+  .account .mail { margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45vw; }
+  .account .sync { display: inline-flex; align-items: center; gap: 6px; }
+  .account .sync::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none;
+  }
+  .account .sync.attente::before { background: var(--warn); }
+  .account .sync.encours::before { background: var(--accent); }
+  .btn.petit { min-height: 34px; padding: 0 10px; font-size: 12.5px; }
+
   /* ---- Onglets ---- */
   .tabs { display: flex; gap: 4px; margin: 0 0 20px; }
   .tab {
@@ -418,6 +452,41 @@
     <p class="assurance">Tout est calculé et rangé sur ton appareil : rien n'est envoyé</p>
   </header>
   <div class="rule" role="presentation"></div>
+
+  <section id="gate" class="gate" hidden>
+    <div class="panel">
+      <div class="body">
+        <h2 id="gateTitre">Connexion</h2>
+        <p class="hint">Tes annonces sont rattachées à ton compte : tu les retrouves sur tous tes appareils, et personne d'autre n'y a accès.</p>
+
+        <div class="field">
+          <label class="lbl" for="gMail">Adresse mail</label>
+          <input type="email" id="gMail" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="lbl" for="gPass">Mot de passe</label>
+          <input type="password" id="gPass" autocomplete="current-password">
+        </div>
+
+        <p class="gate-msg" id="gateMsg" hidden></p>
+
+        <div class="field">
+          <button type="button" class="btn primary wide" id="gLogin">Se connecter</button>
+          <button type="button" class="btn wide" id="gSignup">Créer un compte</button>
+          <button type="button" class="btn lien" id="gForgot">Mot de passe oublié</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="appBody" hidden>
+
+  <div class="account" id="account">
+    <span class="sync" id="syncState"></span>
+    <span class="mail" id="who"></span>
+    <button type="button" class="btn petit" id="btnSync">Synchroniser</button>
+    <button type="button" class="btn petit" id="signOut">Déconnexion</button>
+  </div>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" class="tab" id="tabPhotos" role="tab" aria-selected="true" aria-controls="viewPhotos">Photos</button>
@@ -639,6 +708,8 @@
   <div class="dock" id="dock">
     <button type="button" class="btn primary wide" id="dlAllMobile">Télécharger les photos</button>
   </div>
+
+  </div><!-- /appBody -->
 
 </div>
 
@@ -1251,10 +1322,258 @@
     });
   }
 
-  // Identifiant stable, pensé pour une future synchronisation entre appareils.
+  // Identifiant stable, partagé entre l'appareil et le serveur.
   const uuid = () => (crypto.randomUUID
     ? crypto.randomUUID()
     : "a-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10));
+
+  /* ================================================================
+     Compte et synchronisation
+     ================================================================ */
+
+  // Adresse du projet et clé publique : identifiants techniques, prévus pour
+  // être lisibles ici. Ce sont les règles posées côté serveur qui protègent
+  // les données — chaque compte ne voit que ses propres lignes.
+  const SB_URL = "https://qplbfkfwvlhhoscovcqf.supabase.co";
+  const SB_KEY = "sb_publishable_7tmrtFV9cXSwZ_CdFmE_VA_wqcTqD7c";
+  const SESSION_KEY = "atelier-session";
+
+  let session = null;
+
+  function chargerSession() {
+    try { session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; }
+    catch (e) { session = null; }
+  }
+  function poserSession(s) {
+    session = s;
+    try {
+      if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      else localStorage.removeItem(SESSION_KEY);
+    } catch (e) { /* mode privé : la session ne survivra pas à l'onglet */ }
+  }
+
+  function messageAuth(data, statut) {
+    const code = (data && (data.error_code || data.code || data.error)) || "";
+    const texte = (data && (data.msg || data.message || data.error_description)) || "";
+    const t = (code + " " + texte).toLowerCase();
+    if (t.includes("invalid login") || t.includes("invalid_credentials")) return "Adresse mail ou mot de passe incorrect.";
+    if (t.includes("already registered") || t.includes("user_already_exists")) return "Un compte existe déjà avec cette adresse — connecte-toi.";
+    if (t.includes("email not confirmed")) return "Cette adresse n'est pas encore confirmée : ouvre le mail reçu à l'inscription.";
+    if (t.includes("password should be") || t.includes("weak_password")) return "Le mot de passe doit faire au moins 6 caractères.";
+    if (t.includes("rate limit") || statut === 429) return "Trop de tentatives — réessaie dans quelques minutes.";
+    if (t.includes("invalid email") || t.includes("validation_failed")) return "Cette adresse mail n'est pas valide.";
+    return texte || "La connexion au serveur a échoué.";
+  }
+
+  async function authPost(chemin, corps) {
+    let r;
+    try {
+      r = await fetch(SB_URL + "/auth/v1/" + chemin, {
+        method: "POST",
+        headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify(corps),
+      });
+    } catch (e) {
+      throw new Error("Pas de réseau — vérifie ta connexion.");
+    }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(messageAuth(data, r.status));
+    return data;
+  }
+
+  function retenirJetons(d) {
+    poserSession({
+      access_token: d.access_token,
+      refresh_token: d.refresh_token,
+      expires_at: Date.now() + ((d.expires_in || 3600) - 60) * 1000,
+      user: { id: d.user.id, email: d.user.email },
+    });
+  }
+
+  async function jeton() {
+    if (!session) throw new Error("Non connecté");
+    if (Date.now() > session.expires_at) {
+      const d = await authPost("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
+      retenirJetons(d);
+    }
+    return session.access_token;
+  }
+
+  async function rest(chemin, opts = {}) {
+    const t = await jeton();
+    const r = await fetch(SB_URL + "/rest/v1/" + chemin, {
+      ...opts,
+      headers: {
+        apikey: SB_KEY, Authorization: "Bearer " + t,
+        "Content-Type": "application/json", ...(opts.headers || {}),
+      },
+    });
+    if (!r.ok) throw new Error("Base " + r.status + " — " + (await r.text()).slice(0, 160));
+    return r;
+  }
+
+  async function televerser(chemin, blob) {
+    const t = await jeton();
+    const r = await fetch(SB_URL + "/storage/v1/object/photos/" + chemin, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY, Authorization: "Bearer " + t,
+        "x-upsert": "true", "Content-Type": blob.type || "application/octet-stream",
+      },
+      body: blob,
+    });
+    if (!r.ok) throw new Error("Envoi photo " + r.status + " — " + (await r.text()).slice(0, 160));
+  }
+
+  async function telecharger(chemin) {
+    const t = await jeton();
+    const r = await fetch(SB_URL + "/storage/v1/object/photos/" + chemin, {
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + t },
+    });
+    if (!r.ok) throw new Error("Photo " + r.status);
+    return r.blob();
+  }
+
+  /* ---- Conversions ---- */
+
+  const iso = (ms) => new Date(ms).toISOString();
+  const propre = (nom) => nom.replace(/[^A-Za-z0-9._-]/g, "_").slice(-60);
+
+  function versLigne(a) {
+    return {
+      id: a.id, user_id: session.user.id,
+      created_at: iso(a.createdAt), updated_at: iso(a.updatedAt),
+      deleted_at: a.deletedAt ? iso(a.deletedAt) : null,
+      statut: a.statut, titre: a.titre, description: a.description, mesures: a.mesures,
+      notes: a.notes, prix: a.prix, achat: a.achat,
+      marque: a.marque, taille: a.taille, etat: a.etat,
+      vignette: a.vignette || null,
+      photos: a.photos.filter((p) => p.path).map((p) => ({ name: p.name, path: p.path })),
+    };
+  }
+
+  function depuisLigne(ligne, locale) {
+    // On garde les fichiers déjà présents sur l'appareil pour éviter de les retélécharger.
+    const dejaLa = new Map((locale ? locale.photos : []).filter((p) => p.path && p.blob).map((p) => [p.path, p.blob]));
+    return {
+      id: ligne.id,
+      createdAt: Date.parse(ligne.created_at),
+      updatedAt: Date.parse(ligne.updated_at),
+      deletedAt: ligne.deleted_at ? Date.parse(ligne.deleted_at) : null,
+      statut: ligne.statut || "brouillon",
+      titre: ligne.titre || "", description: ligne.description || "",
+      mesures: ligne.mesures || "", notes: ligne.notes || "",
+      prix: ligne.prix == null ? null : Number(ligne.prix),
+      achat: ligne.achat == null ? null : Number(ligne.achat),
+      marque: ligne.marque || "", taille: ligne.taille || "", etat: ligne.etat || "",
+      vignette: ligne.vignette || null,
+      photos: (ligne.photos || []).map((p) => ({ name: p.name, path: p.path, blob: dejaLa.get(p.path) || null })),
+      dirty: false,
+    };
+  }
+
+  /* ---- Synchronisation ---- */
+
+  let enSync = false, syncDemandee = false, syncTimer = null;
+
+  function majEtatSync(etat, texte) {
+    const el = $("#syncState");
+    el.className = "sync " + (etat || "");
+    el.textContent = texte;
+  }
+
+  function enAttente() { return annonces.filter((a) => a.dirty).length; }
+
+  function planifierSync(delai = 1500) {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => synchroniser(), delai);
+  }
+
+  async function synchroniser() {
+    if (!session) return;
+    if (enSync) { syncDemandee = true; return; }
+    enSync = true;
+    majEtatSync("encours", "Synchronisation…");
+    try {
+      // 1. Envoyer ce qui a changé ici.
+      for (const a of annonces.filter((x) => x.dirty)) {
+        for (let i = 0; i < a.photos.length; i++) {
+          const p = a.photos[i];
+          if (!p.path && p.blob) {
+            const chemin = `${session.user.id}/${a.id}/${i}-${propre(p.name)}`;
+            await televerser(chemin, p.blob);
+            p.path = chemin;
+          }
+        }
+        await rest("annonces", {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates" },
+          body: JSON.stringify(versLigne(a)),
+        });
+        a.dirty = false;
+        await dbPut(a);
+      }
+
+      // 2. Récupérer ce qui a changé ailleurs.
+      const lignes = await (await rest("annonces?select=*")).json();
+      let touche = false;
+      for (const ligne of lignes) {
+        const locale = annonces.find((x) => x.id === ligne.id);
+        const distantMs = Date.parse(ligne.updated_at);
+        if (locale && locale.updatedAt >= distantMs) continue;   // la version d'ici est la plus récente
+        const rec = depuisLigne(ligne, locale);
+        if (locale) Object.assign(locale, rec);
+        else annonces.push(rec);
+        await dbPut(locale || rec);
+        touche = true;
+      }
+
+      if (touche) {
+        renderList();
+        if (openId) { const a = courante(); if (a) openAnnonce(a.id); }
+      }
+      majEtatSync("", "À jour");
+    } catch (e) {
+      console.error(e);
+      const n = enAttente();
+      majEtatSync("attente", n ? `Hors ligne — ${n} en attente` : "Hors ligne");
+    }
+    enSync = false;
+    if (syncDemandee) { syncDemandee = false; planifierSync(300); }
+  }
+
+  /** Télécharge à la demande les photos d'une annonce venue d'un autre appareil. */
+  async function assurerPhotos(a) {
+    if (!session) return false;
+    let recu = false;
+    for (const p of a.photos) {
+      if (!p.blob && p.path) {
+        try { p.blob = await telecharger(p.path); recu = true; }
+        catch (e) { console.error("Photo indisponible", p.path, e); }
+      }
+    }
+    if (recu) await dbPut(a);
+    return recu;
+  }
+
+  /** Miniature légère, stockée dans la ligne : la liste s'affiche sans rien télécharger. */
+  function faireVignette(blob) {
+    return new Promise((res) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const cote = 220;
+        const s = Math.min(1, cote / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL("image/jpeg", 0.7));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+      img.src = url;
+    });
+  }
 
   /* ---- État et rendu de la liste ---- */
 
@@ -1267,6 +1586,7 @@
 
   let annonces = [];
   let openId = null;
+  const vivantes = () => annonces.filter((a) => !a.deletedAt);
   const thumbUrls = new Map();   // id → objectURL de la vignette de liste
 
   const listView = $("#listView"), editView = $("#editView");
@@ -1285,7 +1605,7 @@
     releaseThumbs();
     const q = searchEl.value.trim().toLowerCase();
     const f = filterEl.value;
-    const vus = annonces
+    const vus = vivantes()
       .filter((a) => !f || a.statut === f)
       .filter((a) => !q || (a.titre + " " + a.marque + " " + a.notes).toLowerCase().includes(q))
       .sort((a, b) => b.updatedAt - a.updatedAt);
@@ -1298,7 +1618,9 @@
 
       const vig = document.createElement("div");
       vig.className = "vignette";
-      if (a.photos && a.photos.length) {
+      if (a.vignette) {
+        vig.style.backgroundImage = `url(${a.vignette})`;
+      } else if (a.photos && a.photos.length && a.photos[0].blob) {
         const u = URL.createObjectURL(a.photos[0].blob);
         thumbUrls.set(a.id, u);
         vig.style.backgroundImage = `url(${u})`;
@@ -1333,16 +1655,18 @@
       annonceList.append(el);
     }
 
-    annonceEmpty.hidden = annonces.length > 0;
-    tabCount.textContent = String(annonces.length);
-    tabCount.hidden = annonces.length === 0;
+    const n = vivantes().length;
+    annonceEmpty.hidden = n > 0;
+    tabCount.textContent = String(n);
+    tabCount.hidden = n === 0;
     renderLedger();
   }
 
   async function renderLedger() {
-    if (!annonces.length) { ledger.hidden = true; return; }
-    const par = (s) => annonces.filter((a) => a.statut === s).length;
-    const vendues = annonces.filter((a) => a.statut === "vendue");
+    const toutes = vivantes();
+    if (!toutes.length) { ledger.hidden = true; return; }
+    const par = (s) => toutes.filter((a) => a.statut === s).length;
+    const vendues = toutes.filter((a) => a.statut === "vendue");
     const ca = vendues.reduce((t, a) => t + (Number(a.prix) || 0), 0);
     const marge = vendues.reduce((t, a) => t + (Number(a.prix) || 0) - (Number(a.achat) || 0), 0);
 
@@ -1369,7 +1693,7 @@
     add("Vendues", vendues.length);
     if (vendues.length) { add("Encaissé", euros(ca)); add("Marge", euros(marge)); }
     const s = document.createElement("span");
-    s.textContent = `${annonces.length} annonce${annonces.length > 1 ? "s" : ""}${place}`;
+    s.textContent = `${toutes.length} annonce${toutes.length > 1 ? "s" : ""}${place}`;
     ledger.append(s);
     ledger.hidden = false;
   }
@@ -1405,7 +1729,12 @@
       img.src = u; img.alt = p.name;
       editThumbs.append(img);
     });
-    $("#photoCount").textContent = (a.photos || []).length + " photo" + ((a.photos || []).length > 1 ? "s" : "");
+    const manquantes = (a.photos || []).filter((p) => !p.blob && p.path).length;
+    $("#photoCount").textContent = (a.photos || []).length + " photo" + ((a.photos || []).length > 1 ? "s" : "")
+      + (manquantes ? " · téléchargement…" : "");
+    if (manquantes) {
+      assurerPhotos(a).then((recu) => { if (recu && openId === a.id) openAnnonce(a.id); });
+    }
 
     listView.hidden = true;
     editView.hidden = false;
@@ -1456,9 +1785,12 @@
           : champs[k].value;
       }
       a.updatedAt = Date.now();
+      a.dirty = true;
       try {
         await dbPut(a);
         savedMark.textContent = "Enregistré";
+        renderList();
+        planifierSync();
       } catch (e) {
         console.error(e);
         savedMark.textContent = "Échec de l'enregistrement";
@@ -1496,9 +1828,13 @@
     const a = courante();
     if (!a) return;
     if (!confirm(`Supprimer « ${a.titre || "Sans titre"} » ? Les photos enregistrées avec elle seront perdues.`)) return;
-    await dbDel(a.id);
-    annonces = annonces.filter((x) => x.id !== a.id);
+    a.deletedAt = Date.now();
+    a.updatedAt = a.deletedAt;
+    a.dirty = true;
+    a.photos = [];
+    await dbPut(a);
     closeAnnonce();
+    planifierSync(200);
   });
 
   $("#dlAnnoncePhotos").addEventListener("click", async () => {
@@ -1530,11 +1866,12 @@
     }
     const now = Date.now();
     const rec = {
-      id: uuid(), createdAt: now, updatedAt: now,
+      id: uuid(), createdAt: now, updatedAt: now, deletedAt: null,
       statut: "brouillon",
       titre: "", description: "", mesures: "", notes: "",
       prix: null, achat: null, marque: "", taille: "", etat: "",
-      photos,
+      vignette: photos.length ? await faireVignette(photos[0].blob) : null,
+      photos, dirty: true,
     };
     try {
       await dbPut(rec);
@@ -1549,6 +1886,7 @@
     renderList();
     openAnnonce(rec.id);
     champs.titre.focus();
+    planifierSync(200);
   });
 
   /* ---- Onglets ---- */
@@ -1573,7 +1911,135 @@
       annonceEmpty.hidden = false;
       return;
     }
+    // Reprise des annonces créées avant l'arrivée des comptes : sans ce marquage
+    // elles ne partiraient jamais vers le serveur, et la déconnexion les perdrait.
+    for (const a of annonces) {
+      if (a.dirty !== undefined) continue;
+      a.dirty = true;
+      if (a.deletedAt === undefined) a.deletedAt = null;
+      if (!a.vignette && a.photos && a.photos[0] && a.photos[0].blob) {
+        a.vignette = await faireVignette(a.photos[0].blob);
+      }
+      await dbPut(a);
+    }
     renderList();
+  }
+
+  /* ================================================================
+     Écran de connexion
+     ================================================================ */
+
+  const gate = $("#gate"), appBody = $("#appBody");
+  const gMail = $("#gMail"), gPass = $("#gPass"), gateMsg = $("#gateMsg");
+
+  function direGate(texte, ok) {
+    gateMsg.textContent = texte;
+    gateMsg.classList.toggle("ok", !!ok);
+    gateMsg.hidden = !texte;
+  }
+  function occupe(oui) {
+    ["gLogin", "gSignup", "gForgot"].forEach((id) => { $("#" + id).disabled = oui; });
+  }
+
+  async function entrer() {
+    gate.hidden = true;
+    appBody.hidden = false;
+    $("#who").textContent = session.user.email;
+    majEtatSync("encours", "Synchronisation…");
+    await initAnnonces();
+    synchroniser();
+  }
+
+  function sortir() {
+    gate.hidden = false;
+    appBody.hidden = true;
+    gPass.value = "";
+  }
+
+  $("#gLogin").addEventListener("click", async () => {
+    direGate("");
+    if (!gMail.value.trim() || !gPass.value) { direGate("Adresse mail et mot de passe sont nécessaires."); return; }
+    occupe(true);
+    try {
+      const d = await authPost("token?grant_type=password", { email: gMail.value.trim(), password: gPass.value });
+      retenirJetons(d);
+      gPass.value = "";
+      await entrer();
+    } catch (e) {
+      direGate(e.message);
+    }
+    occupe(false);
+  });
+
+  $("#gSignup").addEventListener("click", async () => {
+    direGate("");
+    if (!gMail.value.trim() || !gPass.value) { direGate("Adresse mail et mot de passe sont nécessaires."); return; }
+    if (gPass.value.length < 6) { direGate("Choisis un mot de passe d'au moins 6 caractères."); return; }
+    occupe(true);
+    try {
+      const d = await authPost("signup", { email: gMail.value.trim(), password: gPass.value });
+      if (d.access_token) {
+        retenirJetons(d);
+        gPass.value = "";
+        await entrer();
+      } else {
+        direGate("Compte créé. Ouvre le mail de confirmation, puis reviens te connecter.", true);
+      }
+    } catch (e) {
+      direGate(e.message);
+    }
+    occupe(false);
+  });
+
+  $("#gForgot").addEventListener("click", async () => {
+    direGate("");
+    if (!gMail.value.trim()) { direGate("Écris d'abord ton adresse mail au-dessus."); return; }
+    occupe(true);
+    try {
+      await authPost("recover", { email: gMail.value.trim() });
+      direGate("Si un compte existe pour cette adresse, un lien vient de partir par mail.", true);
+    } catch (e) {
+      direGate(e.message);
+    }
+    occupe(false);
+  });
+
+  gPass.addEventListener("keydown", (e) => { if (e.key === "Enter") $("#gLogin").click(); });
+  gMail.addEventListener("keydown", (e) => { if (e.key === "Enter") gPass.focus(); });
+
+  $("#btnSync").addEventListener("click", () => synchroniser());
+
+  $("#signOut").addEventListener("click", async () => {
+    const restant = enAttente();
+    if (restant) {
+      majEtatSync("encours", "Envoi avant déconnexion…");
+      await synchroniser();
+      if (enAttente() && !confirm(`${enAttente()} modification(s) n'ont pas pu être envoyées. Se déconnecter quand même les perdra sur cet appareil. Continuer ?`)) {
+        majEtatSync("attente", `${enAttente()} en attente`);
+        return;
+      }
+    }
+    try { await fetch(SB_URL + "/auth/v1/logout", { method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + session.access_token } }); }
+    catch (e) { /* la session locale part de toute façon */ }
+    // Le carnet local est vidé : les annonces restent en ligne, rattachées au compte.
+    for (const a of annonces) { try { await dbDel(a.id); } catch (e) { /* ignore */ } }
+    annonces = [];
+    openId = null;
+    poserSession(null);
+    renderList();
+    sortir();
+  });
+
+  // Une fenêtre qui revient au premier plan est le bon moment pour se remettre à jour.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && session) planifierSync(400);
+  });
+  window.addEventListener("online", () => { if (session) planifierSync(200); });
+
+  async function initCompte() {
+    chargerSession();
+    if (session && session.refresh_token) await entrer();   // le cache local s'affiche même sans réseau
+    else sortir();
   }
 
   // État initial : réglages mémorisés reportés dans l'interface.
@@ -1587,7 +2053,7 @@
   const known = swatches.find((s) => s.dataset.color === (opts.transparent ? "transparent" : opts.color));
   markColor(known || null);
   syncChrome();
-  initAnnonces();
+  initCompte();
 })();
 </script>
 </body>
